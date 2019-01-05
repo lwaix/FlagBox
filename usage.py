@@ -4,11 +4,10 @@ class User(Base):
     class Meta:
         db = Mysql(host='localhost', user='root', password='xuri', database='testdb')
         table = 'user'
-    username = StringField(unique=True)
-    password = StringField()
-    salary = FloatField()
+    username = StringField(max_length=32,nullable=False,unique=True)
+    password = StringField(max_length=64)
+    salary = FloatField(default=0.0)
 
-User.drop_table()
 User.create_table()
 
 # 增

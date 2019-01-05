@@ -5,10 +5,17 @@ Notes:
 特殊符号转义?
 命名?
 异常完善?
+Text?
 """
 
 def Mysql(host, user, password, database):
     return pymysql.connect(host, user, password, database)
+
+def safe(content):
+    if isinstance(content, str):
+        return pymysql.escape_string(content)
+    else:
+        return content
 
 class Query:
     def __init__(self, _type, obj, value):
@@ -18,7 +25,7 @@ class Query:
     
     def _make_sentence(self):
         if self.obj._check(self.value):
-            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj._add(self.value))
+            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj._add(safe(self.value)))
         else:
             raise TypeError('类型错误')
 
@@ -29,8 +36,6 @@ class StringField:
         self.max_length = max_length
         self.nullable = nullable
         self.unique = unique
-        if not self._check(default):
-            raise TypeError('default参数类型异常')
         self.default = default
 
     def _make_sentence(self):
@@ -62,8 +67,6 @@ class IntField:
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
-        if not self._check(default):
-            raise TypeError('default参数类型异常')
         self.default = default
 
     def _make_sentence(self):
@@ -107,8 +110,6 @@ class FloatField:
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
-        if not self._check(default):
-            raise TypeError('default参数类型异常')
         self.default = default
 
     def _make_sentence(self):
@@ -243,7 +244,7 @@ class Base:
         for key,value in fields.items():
             if value._check(data.get(key)):
                 fieldnames.append(key)
-                values.append(value._add(data.get(key)))
+                values.append(value._add((safe((data.get(key))))))
             else:
                 raise TypeError
         fieldnames_str = ','.join(fieldnames)
@@ -316,7 +317,7 @@ class Base:
             value = current_data.get(field.fieldname)
             if not field._check(value):
                 raise TypeError('类型错误')
-            sets.append('{}={}'.format(field.fieldname,field._add(value)))
+            sets.append('{}={}'.format(field.fieldname,field._add(safe(value))))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
         cursor.execute(sentence)
