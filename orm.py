@@ -37,13 +37,13 @@ def Mysql(host, user, password, database):
 
 class Query:
     def __init__(self, _type, obj, value):
-        self._type = _type
+        self.type = _type
         self.obj = obj
         self.value = value
     
     def make_sentence(self):
         if self.obj.check(self.value):
-            return '{}{}{}'.format(self.obj.fieldname, self._type, self.obj.add(self.value))
+            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj.add(self.value))
         else:
             raise TypeError('类型错误')
 
@@ -76,6 +76,9 @@ class StringField:
     
     def __eq__(self, value):
         return Query('=', self, value)
+    
+    def __ne__(self, value):
+        return Query('!=', self, value)
         
 class IntField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -102,6 +105,24 @@ class IntField:
     def add(self, value):
         return "{}".format(value)
 
+    def __eq__(self, value):
+        return Query('=', self, value)
+    
+    def __ne__(self, value):
+        return Query('!=', self, value)
+    
+    def __gt__(self, value):
+        return Query('>', self, value)
+    
+    def __lt__(self, value):
+        return Query('<', self, value)
+    
+    def __ge__(self, value):
+        return Query('>=', self, value)
+
+    def __le__(self, value):
+        return Query('<=', self, value)
+
 class FloatField:
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
@@ -126,6 +147,24 @@ class FloatField:
     
     def add(self, value):
         return "{}".format(value)
+    
+    def __eq__(self, value):
+        return Query('=', self, value)
+    
+    def __ne__(self, value):
+        return Query('!=', self, value)
+    
+    def __gt__(self, value):
+        return Query('>', self, value)
+    
+    def __lt__(self, value):
+        return Query('<', self, value)
+    
+    def __ge__(self, value):
+        return Query('>=', self, value)
+
+    def __le__(self, value):
+        return Query('<=', self, value)
 
 field_types = (StringField, IntField, FloatField)
 # ============
