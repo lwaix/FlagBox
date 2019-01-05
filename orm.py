@@ -22,12 +22,7 @@ users = User.select(User.username == 'xuri')
 
 """
 Notes:
-Fields实现比较运算符?
-如果string类型为空?
-字段的init类型检查?
 特殊符号转义?
-插入内容后是否更新id?id的用途?
-cla.Meta self.Meta?
 命名?
 异常完善?
 """
@@ -41,9 +36,9 @@ class Query:
         self.obj = obj
         self.value = value
     
-    def make_sentence(self):
-        if self.obj.check(self.value):
-            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj.add(self.value))
+    def _make_sentence(self):
+        if self.obj._check(self.value):
+            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj._add(self.value))
         else:
             raise TypeError('类型错误')
 
@@ -54,9 +49,11 @@ class StringField:
         self.max_length = max_length
         self.nullable = nullable
         self.unique = unique
+        if not self._check(default):
+            raise TypeError('default参数类型异常')
         self.default = default
 
-    def make_sentence(self):
+    def _make_sentence(self):
         sentence = '{} VARCHAR({})'.format(self.fieldname, self.max_length)
         if self.default is not None:
             sentence += " DEFAULT '{}'".format(self.default)
@@ -66,12 +63,12 @@ class StringField:
             sentence += ' UNIQUE'
         return sentence
 
-    def check(self, value):
+    def _check(self, value):
         if isinstance(value, str) or (value is None and self.nullable):
             return True
         return False
     
-    def add(self, value):
+    def _add(self, value):
         return "'{}'".format(value)
     
     def __eq__(self, value):
@@ -85,9 +82,11 @@ class IntField:
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
+        if not self._check(default):
+            raise TypeError('default参数类型异常')
         self.default = default
 
-    def make_sentence(self):
+    def _make_sentence(self):
         sentence = '{} INT'.format(self.fieldname)
         if self.default is not None:
             sentence += " DEFAULT {}".format(self.default)
@@ -97,12 +96,12 @@ class IntField:
             sentence += ' UNIQUE'
         return sentence
     
-    def check(self, value):
+    def _check(self, value):
         if isinstance(value, int) or (value is None and self.nullable):
             return True
         return False
     
-    def add(self, value):
+    def _add(self, value):
         return "{}".format(value)
 
     def __eq__(self, value):
@@ -128,9 +127,11 @@ class FloatField:
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
+        if not self._check(default):
+            raise TypeError('default参数类型异常')
         self.default = default
 
-    def make_sentence(self):
+    def _make_sentence(self):
         sentence = '{} FLOAT'.format(self.fieldname)
         if self.default is not None:
             sentence += " DEFAULT {}".format(self.default)
@@ -140,12 +141,12 @@ class FloatField:
             sentence += ' UNIQUE'
         return sentence
     
-    def check(self, value):
+    def _check(self, value):
         if isinstance(value, float) or (value is None and self.nullable):
             return True
         return False
     
-    def add(self, value):
+    def _add(self, value):
         return "{}".format(value)
     
     def __eq__(self, value):
@@ -231,7 +232,7 @@ class Base:
 
         field_sentences = ['id INT NOT NULL AUTO_INCREMENT PRIMARY KEY']
         for key,value in fields.items():
-            field_sentences.append(value.make_sentence())
+            field_sentences.append(value._make_sentence())
         
         field_str = ','.join(field_sentences)
 
@@ -249,8 +250,8 @@ class Base:
     
     def insert(self):
         self.__class__._init()
-        db = self.Meta.db
-        table = self.Meta.table
+        db = self.__class__.Meta.db
+        table = self.__class__.Meta.table
         cursor = db.cursor()
         data = self._get_current_data()
         fields = self.__class__._get_fields()
@@ -260,9 +261,9 @@ class Base:
         values = []
         # 类型检查
         for key,value in fields.items():
-            if value.check(data.get(key)):
+            if value._check(data.get(key)):
                 fieldnames.append(key)
-                values.append(value.add(data.get(key)))
+                values.append(value._add(data.get(key)))
             else:
                 raise TypeError
         fieldnames_str = ','.join(fieldnames)
@@ -303,7 +304,7 @@ class Base:
 
         temp1 = ','.join(fieldnames)
         for query in querys:
-            conditions.append(query.make_sentence())
+            conditions.append(query._make_sentence())
         temp2 = ','.join(conditions)
         sentence = 'SELECT id,{} FROM {} WHERE {}'.format(temp1, table, temp2)
         if cursor.execute(sentence) == 0:
@@ -322,8 +323,8 @@ class Base:
         return res
     
     def update(self):
-        db = self.Meta.db
-        table = self.Meta.table
+        db = self.__class__.Meta.db
+        table = self.__class__.Meta.table
         cursor = db.cursor()
         if self.id == 0:
             raise Exception('该对象不可更新')
@@ -332,10 +333,22 @@ class Base:
         sets = []
         for field in fields.values():
             value = current_data.get(field.fieldname)
-            if not field.check(value):
+            if not field._check(value):
                 raise TypeError('类型错误')
-            sets.append('{}={}'.format(field.fieldname,field.add(value)))
+            sets.append('{}={}'.format(field.fieldname,field._add(value)))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
+        cursor.execute(sentence)
+        db.commit()
+    
+    def delete(self):
+        db = self.__class__.Meta.db
+        table = self.__class__.Meta.table
+        cursor = db.cursor()
+
+        if self.id == 0:
+            raise Exception('此对象不可删除')
+        
+        sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
         cursor.execute(sentence)
         db.commit()
