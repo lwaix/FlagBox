@@ -1,26 +1,6 @@
 import pymysql
 
 """
-LIKE THIS:
-
-class User(Base):
-    class Meta:
-        db = Mysql(host='127.0.0.1', port=3306, user='root', password='xuri')
-        table = 'user'
-    username = StringField()
-    password = StringField()
-
-user1 = User(username='userxuri', password='xuripass')
-user1.insert()
-
-user2 = User(username='userxuri2', password='xuripass2')
-xuri2.username = 'userxuri2'
-xuri2.insert()
-
-users = User.select(User.username == 'xuri')
-"""
-
-"""
 Notes:
 特殊符号转义?
 命名?
@@ -323,6 +303,7 @@ class Base:
         return res
     
     def update(self):
+        self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
@@ -342,6 +323,7 @@ class Base:
         db.commit()
     
     def delete(self):
+        self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
