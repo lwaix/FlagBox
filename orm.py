@@ -30,7 +30,35 @@ class Query:
             raise TypeError('类型错误')
 
 # ===Fields===
-class StringField:
+class TextField:
+    def __init__(self, nullable=True, unique=False):
+        self.fieldname = None
+        self.nullable = nullable
+        self.unique = unique
+
+    def _make_sentence(self):
+        sentence = '{} TEXT'.format(self.fieldname)
+        if not self.nullable:
+            sentence += ' NOT NULL'
+        if self.unique:
+            sentence += ' UNIQUE'
+        return sentence
+
+    def _check(self, value):
+        if isinstance(value, str) or (value is None and self.nullable):
+            return True
+        return False
+    
+    def _add(self, value):
+        return "'{}'".format(value)
+    
+    def __eq__(self, value):
+        return Query('=', self, value)
+    
+    def __ne__(self, value):
+        return Query('!=', self, value)
+
+class VarcharField:
     def __init__(self, max_length=256, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.max_length = max_length
@@ -148,7 +176,7 @@ class FloatField:
     def __le__(self, value):
         return Query('<=', self, value)
 
-field_types = (StringField, IntField, FloatField)
+field_types = (TextField, VarcharField, IntField, FloatField)
 # ============
 
 class Base:

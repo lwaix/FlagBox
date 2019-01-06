@@ -4,10 +4,12 @@ class User(Base):
     class Meta:
         db = Mysql(host='localhost', user='root', password='xuri', database='testdb')
         table = 'user'
-    username = StringField(max_length=32,nullable=False,unique=True)
-    password = StringField(max_length=64)
-    salary = FloatField(default=0.0)
+    username = VarcharField(max_length=32,nullable=False,unique=True)
+    password = VarcharField(max_length=64, nullable=False, unique=False)
+    comment = TextField(nullable=True, unique=False)
+    salary = FloatField(nullable=False, unique=False, default=0.0)
 
+User.drop_table()
 User.create_table()
 
 # 增
@@ -23,7 +25,7 @@ user.delete()
 
 # 查
 user = User.search(User.username == 'xuri2')[0]
-print(user.id, user.username, user.password, user.salary)
+print(user.id, user.username, user.password, user.salary, user.comment)
 
 # 改
 user = User.search(User.username == 'xuri2')[0]
