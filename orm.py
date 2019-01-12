@@ -5,28 +5,19 @@ Notes:
 命名?
 异常完善?
 重构?
+and or?
+sort?
 """
 
 def Mysql(host, user, password, database):
     return pymysql.connect(host, user, password, database)
 
+# 将值转安全转意
 def safe(content):
     if isinstance(content, str):
         return pymysql.escape_string(content)
     else:
         return content
-
-class Query:
-    def __init__(self, _type, obj, value):
-        self.type = _type
-        self.obj = obj
-        self.value = value
-    
-    def _make_sentence(self):
-        if self.obj._check(self.value):
-            return '{}{}{}'.format(self.obj.fieldname, self.type, self.obj._add(safe(self.value)))
-        else:
-            raise TypeError('类型错误')
 
 # ===Fields===
 class TextField:
@@ -52,10 +43,10 @@ class TextField:
         return "'{}'".format(value)
     
     def __eq__(self, value):
-        return Query('=', self, value)
+        return '{}={}'.format(self.fieldname, self._add(value))
     
     def __ne__(self, value):
-        return Query('!=', self, value)
+        return '{}!={}'.format(self.fieldname, self._add(value))
 
 class VarcharField:
     def __init__(self, max_length=256, nullable=True, unique=False, default=None):
@@ -84,10 +75,10 @@ class VarcharField:
         return "'{}'".format(value)
     
     def __eq__(self, value):
-        return Query('=', self, value)
+        return '{}={}'.format(self.fieldname, self._add(value))
     
     def __ne__(self, value):
-        return Query('!=', self, value)
+        return '{}!={}'.format(self.fieldname, self._add(value))
         
 class IntField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -115,22 +106,22 @@ class IntField:
         return "{}".format(value)
 
     def __eq__(self, value):
-        return Query('=', self, value)
+        return '{}={}'.format(self.fieldname, self._add(value))
     
     def __ne__(self, value):
-        return Query('!=', self, value)
+        return '{}!={}'.format(self.fieldname, self._add(value))
     
     def __gt__(self, value):
-        return Query('>', self, value)
+        return '{}>{}'.format(self.fieldname, self._add(value))
     
     def __lt__(self, value):
-        return Query('<', self, value)
+        return '{}<{}'.format(self.fieldname, self._add(value))
     
     def __ge__(self, value):
-        return Query('>=', self, value)
+        return '{}>={}'.format(self.fieldname, self._add(value))
 
     def __le__(self, value):
-        return Query('<=', self, value)
+        return '{}<={}'.format(self.fieldname, self._add(value))
 
 class FloatField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -158,22 +149,22 @@ class FloatField:
         return "{}".format(value)
     
     def __eq__(self, value):
-        return Query('=', self, value)
+        return '{}={}'.format(self.fieldname, self._add(value))
     
     def __ne__(self, value):
-        return Query('!=', self, value)
+        return '{}!={}'.format(self.fieldname, self._add(value))
     
     def __gt__(self, value):
-        return Query('>', self, value)
+        return '{}>{}'.format(self.fieldname, self._add(value))
     
     def __lt__(self, value):
-        return Query('<', self, value)
+        return '{}<{}'.format(self.fieldname, self._add(value))
     
     def __ge__(self, value):
-        return Query('>=', self, value)
+        return '{}>={}'.format(self.fieldname, self._add(value))
 
     def __le__(self, value):
-        return Query('<=', self, value)
+        return '{}<={}'.format(self.fieldname, self._add(value))
 
 class PrimaryKeyField():
     def __init__(self):
@@ -191,22 +182,22 @@ class PrimaryKeyField():
         return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
     
     def __eq__(self, value):
-        return Query('=', self, value)
+        return '{}={}'.format(self.fieldname, self._add(value))
     
     def __ne__(self, value):
-        return Query('!=', self, value)
+        return '{}!={}'.format(self.fieldname, self._add(value))
     
     def __gt__(self, value):
-        return Query('>', self, value)
+        return '{}>{}'.format(self.fieldname, self._add(value))
     
     def __lt__(self, value):
-        return Query('<', self, value)
+        return '{}<{}'.format(self.fieldname, self._add(value))
     
     def __ge__(self, value):
-        return Query('>=', self, value)
+        return '{}>={}'.format(self.fieldname, self._add(value))
 
     def __le__(self, value):
-        return Query('<=', self, value)
+        return '{}<={}'.format(self.fieldname, self._add(value))
         
 
 field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
@@ -324,10 +315,11 @@ class Base:
         
         conditions = []
 
-        temp1 = ','.join(fieldnames)
         for query in querys:
-            conditions.append(query._make_sentence())
-        temp2 = ' and '.join(conditions)
+            conditions.append(safe(query))
+
+        temp1 = ','.join(fieldnames)
+        temp2 = ' and '.join(querys)
         if querys:
             sentence = 'SELECT {} FROM {} WHERE {}'.format(temp1, table, temp2)
         else:

@@ -4,6 +4,7 @@ class User(Base):
     class Meta:
         db = Mysql(host='localhost', user='root', password='xuri', database='testdb')
         table = 'user'
+    id = PrimaryKeyField()
     username = VarcharField(max_length=32,nullable=False,unique=True)
     password = VarcharField(max_length=64, nullable=False, unique=False)
     comment = TextField(nullable=True, unique=False)

@@ -11,6 +11,8 @@ class User(Base):
         db = Mysql(host='localhost', user='root', password='your-password', database='your-database')
         # 表名
         table = 'user'
+    # id字段,每个模型都必须定义此字段,才得以正常工作
+    id = PrimaryKeyField()
     # 定义字段,字段名是定义的变量名称
     # 支持的字段类型:VARCHAR,Text,Int,Float
     username = VarcharField(max_length=32,nullable=False,unique=True)
