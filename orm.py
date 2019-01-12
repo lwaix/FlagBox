@@ -4,6 +4,7 @@ import pymysql
 Notes:
 命名?
 异常完善?
+重构?
 """
 
 def Mysql(host, user, password, database):
@@ -174,7 +175,41 @@ class FloatField:
     def __le__(self, value):
         return Query('<=', self, value)
 
-field_types = (TextField, VarcharField, IntField, FloatField)
+class PrimaryKeyField():
+    def __init__(self):
+        self.fieldname = None
+    
+    def _check(self, value):
+        if isinstance(value, int) or (value is None and self.nullable):
+            return True
+        return False
+    
+    def _add(self, value):
+        return '{}'.format(value)
+    
+    def _make_sentence(self):
+        return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
+    
+    def __eq__(self, value):
+        return Query('=', self, value)
+    
+    def __ne__(self, value):
+        return Query('!=', self, value)
+    
+    def __gt__(self, value):
+        return Query('>', self, value)
+    
+    def __lt__(self, value):
+        return Query('<', self, value)
+    
+    def __ge__(self, value):
+        return Query('>=', self, value)
+
+    def __le__(self, value):
+        return Query('<=', self, value)
+        
+
+field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
 # ============
 
 class Base:
@@ -188,8 +223,7 @@ class Base:
     # 接收值,如果属于某字段就__setattr__
     def __init__(self, **kwargs):
         self.__class__._init()
-        # 靠id来判断该对象是否已经被插入进数据库了,如果为0则还未被插入
-        self.id = 0
+        # 靠id来判断该对象是否已经被插入进数据库了,如果为None则还未被插入
         fields = self.__class__._get_fields()
         fieldnames = fields.keys()
         # 检查是否有未知的参数
@@ -237,7 +271,7 @@ class Base:
 
         fields = cla._get_fields()
 
-        field_sentences = ['id INT NOT NULL AUTO_INCREMENT PRIMARY KEY']
+        field_sentences = []
         for key,value in fields.items():
             field_sentences.append(value._make_sentence())
         
@@ -268,37 +302,18 @@ class Base:
         values = []
         # 类型检查
         for key,value in fields.items():
+            if key == 'id':
+                continue
             if value._check(data.get(key)):
                 fieldnames.append(key)
                 values.append(value._add((safe((data.get(key))))))
             else:
-                raise TypeError
+                raise TypeError('类型不匹配')
         fieldnames_str = ','.join(fieldnames)
         values_str = ','.join(values)
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, fieldnames_str, values_str)
         cursor.execute(sentence)
         db.commit()
-    
-    @classmethod
-    def get_by_id(cla, _id):
-        cla._init()
-        table = cla.Meta.table
-        cursor = cla.Meta.db.cursor()
-        fieldnames = cla._get_fields().keys()
-        
-        temp1 = ','.join(fieldnames)
-        sentence = 'SELECT {} FROM {} WHERE id={}'.format(temp1, table, str(_id))
-        if cursor.execute(sentence) == 0:
-            return None
-        else:
-            obj = cursor.fetchone()
-            res = cla()
-            res.id = _id
-            index = 0
-            while index <= len(fieldnames)-1:
-                res.__setattr__(list(fieldnames)[index], obj[index])
-                index += 1
-            return res
     
     @classmethod
     def search(cla, *querys):
@@ -312,8 +327,11 @@ class Base:
         temp1 = ','.join(fieldnames)
         for query in querys:
             conditions.append(query._make_sentence())
-        temp2 = ','.join(conditions)
-        sentence = 'SELECT id,{} FROM {} WHERE {}'.format(temp1, table, temp2)
+        temp2 = ' and '.join(conditions)
+        if querys:
+            sentence = 'SELECT {} FROM {} WHERE {}'.format(temp1, table, temp2)
+        else:
+            sentence = 'SELECT {} FROM {}'.format(temp1, table, temp2)
         if cursor.execute(sentence) == 0:
             return []
         all_data = cursor.fetchall()
@@ -321,7 +339,6 @@ class Base:
         for one in all_data:
             one = list(one)
             obj = cla()
-            obj.id = one.pop(0)
             index = 0
             while index <= len(fieldnames)-1:
                 obj.__setattr__(list(fieldnames)[index], one[index])
@@ -334,7 +351,7 @@ class Base:
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
-        if self.id == 0:
+        if self.id == None:
             raise Exception('该对象不可更新')
         fields = self.__class__._get_fields()
         current_data = self._get_current_data()
@@ -355,7 +372,7 @@ class Base:
         table = self.__class__.Meta.table
         cursor = db.cursor()
 
-        if self.id == 0:
+        if self.id == None:
             raise Exception('此对象不可删除')
         
         sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
