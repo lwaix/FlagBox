@@ -2,10 +2,8 @@ import pymysql
 
 """
 Notes:
-特殊符号转义?
 命名?
 异常完善?
-Text?
 """
 
 def Mysql(host, user, password, database):
