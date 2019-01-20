@@ -50,7 +50,10 @@ class TextField:
     
     # 每个字段都实现这个方法:获取这个字段值的表达式比如INT和FLOAT分别是1,1.0,而TEXT,VARCHAR是'1'
     def _value(self, value):
-        return "'{}'".format(value)
+        if value is not None:
+            return "'{}'".format(value)
+        else:
+            return 'NULL'
     
     def __eq__(self, value):
         return '{}={}'.format(self.fieldname, self._value(value))
@@ -85,10 +88,10 @@ class VarcharField:
         return "'{}'".format(value)
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(value))
+        return '{}={}'.format(self.fieldname, self._value(safe(value)))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(value))
+        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
         
 class IntField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -159,22 +162,22 @@ class FloatField:
         return "{}".format(value)
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(value))
+        return '{}={}'.format(self.fieldname, self._value(safe(value)))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(value))
+        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
     
     def __gt__(self, value):
-        return '{}>{}'.format(self.fieldname, self._value(value))
+        return '{}>{}'.format(self.fieldname, self._value(safe(value)))
     
     def __lt__(self, value):
-        return '{}<{}'.format(self.fieldname, self._value(value))
+        return '{}<{}'.format(self.fieldname, self._value(safe(value)))
     
     def __ge__(self, value):
-        return '{}>={}'.format(self.fieldname, self._value(value))
+        return '{}>={}'.format(self.fieldname, self._value(safe(value)))
 
     def __le__(self, value):
-        return '{}<={}'.format(self.fieldname, self._value(value))
+        return '{}<={}'.format(self.fieldname, self._value(safe(value)))
 
 class PrimaryKeyField():
     def __init__(self):
@@ -192,22 +195,22 @@ class PrimaryKeyField():
         return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(value))
+        return '{}={}'.format(self.fieldname, self._value(safe(value)))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(value))
+        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
     
     def __gt__(self, value):
-        return '{}>{}'.format(self.fieldname, self._value(value))
+        return '{}>{}'.format(self.fieldname, self._value(safe(value)))
     
     def __lt__(self, value):
-        return '{}<{}'.format(self.fieldname, self._value(value))
+        return '{}<{}'.format(self.fieldname, self._value(safe(value)))
     
     def __ge__(self, value):
-        return '{}>={}'.format(self.fieldname, self._value(value))
+        return '{}>={}'.format(self.fieldname, self._value(safe(value)))
 
     def __le__(self, value):
-        return '{}<={}'.format(self.fieldname, self._value(value))
+        return '{}<={}'.format(self.fieldname, self._value(safe(value)))
         
 
 field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
@@ -287,6 +290,9 @@ class Base:
         cursor.execute(sentence)
     
     def insert(self):
+        # 被插入过的对象无法被重复插入
+        if self.inserted():
+            raise Exception("该对象不可插入")
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
@@ -299,7 +305,8 @@ class Base:
         # 类型检查
         for key,value in fields.items():
             if value._check(data.get(key)):
-                if key == 'id':
+                # 不需要插入id且值为None的字段不需要插入
+                if key == 'id' or data.get(key) is None:
                     continue
                 fieldnames.append(key)
                 values.append(value._value((safe((data.get(key))))))
@@ -309,7 +316,13 @@ class Base:
         values_str = ','.join(values)
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, fieldnames_str, values_str)
         cursor.execute(sentence)
+        self.id = cursor.lastrowid
         db.commit()
+    
+    def inserted(self):
+        if self.__class__._get_fields().get('id')._check(self.id) and self.id == None:
+            return False
+        return True
     
     @classmethod
     def search(cla, *querys):
@@ -318,17 +331,12 @@ class Base:
         cursor = cla.Meta.db.cursor()
         fieldnames = cla._get_fields().keys()
         
-        conditions = []
-
-        for query in querys:
-            conditions.append(safe(query))
-
-        temp1 = ','.join(fieldnames)
-        temp2 = ' and '.join(querys)
+        fieldnames_str = ','.join(fieldnames)
+        conditions_str = ' and '.join(querys)
         if querys:
-            sentence = 'SELECT {} FROM {} WHERE {}'.format(temp1, table, temp2)
+            sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, table, conditions_str)
         else:
-            sentence = 'SELECT {} FROM {}'.format(temp1, table, temp2)
+            sentence = 'SELECT {} FROM {}'.format(fieldnames_str, table)
         if cursor.execute(sentence) == 0:
             return []
         all_data = cursor.fetchall()
@@ -344,19 +352,21 @@ class Base:
         return res
     
     def update(self):
+        # 没有被插入的对象无法更新
+        if not self.inserted():
+            raise Exception('该对象不可更新')
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
-        if self.id == None:
-            raise Exception('该对象不可更新')
         fields = self.__class__._get_fields()
         current_data = self._get_current_data()
+
         sets = []
         for field in fields.values():
             value = current_data.get(field.fieldname)
             if not field._check(value):
-                raise TypeError('类型错误')
+                raise TypeError('字段值未通过验证')
             sets.append('{}={}'.format(field.fieldname,field._value(safe(value))))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
@@ -364,14 +374,13 @@ class Base:
         db.commit()
     
     def delete(self):
+        if not self.inserted():
+            raise Exception('该对象不可删除')
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
 
-        if self.id == None:
-            raise Exception('此对象不可删除')
-        
         sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
         cursor.execute(sentence)
         db.commit()
