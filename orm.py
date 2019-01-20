@@ -11,6 +11,11 @@ import pymysql
     - 不能自己在模型里面自己定义任何方法,或不属于Fields类型的字段
 """
 
+"""
+NOTES:
+    比较运算对象?
+"""
+
 def Mysql(host, user, password, database):
     return pymysql.connect(host, user, password, database)
 
@@ -26,11 +31,11 @@ class Query:
         self.condition = '({})'.format(condition)
     
     def __and__(self, obj):
-        self.condition = '({})'.format(self.condition + ' and ' + obj.condition)
+        self.condition = '({})'.format(self.condition + ' AND ' + obj.condition)
         return self
     
     def __or__(self, obj):
-        self.condition = '({})'.format(self.condition + ' or ' + obj.condition)
+        self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
 
 # ===Fields===
@@ -64,9 +69,13 @@ class TextField:
             return 'NULL'
 
     def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
 
 class VarcharField:
@@ -99,9 +108,13 @@ class VarcharField:
             return 'NULL'
     
     def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
         
 class IntField:
@@ -133,9 +146,13 @@ class IntField:
             return 'NULL'
 
     def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
     
     def __gt__(self, value):
@@ -179,9 +196,13 @@ class FloatField:
             return 'NULL'
     
     def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
     
     def __gt__(self, value):
@@ -215,9 +236,13 @@ class PrimaryKeyField():
         return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
     
     def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
     
     def __gt__(self, value):
