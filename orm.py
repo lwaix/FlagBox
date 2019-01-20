@@ -21,6 +21,18 @@ def safe(value):
     else:
         return value
 
+class Query:
+    def __init__(self, condition):
+        self.condition = '({})'.format(condition)
+    
+    def __and__(self, obj):
+        self.condition = '({})'.format(self.condition + ' and ' + obj.condition)
+        return self
+    
+    def __or__(self, obj):
+        self.condition = '({})'.format(self.condition + ' or ' + obj.condition)
+        return self
+
 # ===Fields===
 class TextField:
     def __init__(self, nullable=True, unique=False):
@@ -50,12 +62,12 @@ class TextField:
             return "'{}'".format(value)
         else:
             return 'NULL'
-    
+
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(value))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(value))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
 
 class VarcharField:
     def __init__(self, max_length=256, nullable=True, unique=False, default=None):
@@ -81,13 +93,16 @@ class VarcharField:
         return False
     
     def _value(self, value):
-        return "'{}'".format(value)
+        if value is not None:
+            return "'{}'".format(value)
+        else:
+            return 'NULL'
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
         
 class IntField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -112,25 +127,28 @@ class IntField:
         return False
     
     def _value(self, value):
-        return "{}".format(value)
+        if value is not None:
+            return "{}".format(value)
+        else:
+            return 'NULL'
 
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(value))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(value))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
     
     def __gt__(self, value):
-        return '{}>{}'.format(self.fieldname, self._value(value))
+        return Query('{}>{}'.format(self.fieldname, self._value(value)))
     
     def __lt__(self, value):
-        return '{}<{}'.format(self.fieldname, self._value(value))
+        return Query('{}<{}'.format(self.fieldname, self._value(value)))
     
     def __ge__(self, value):
-        return '{}>={}'.format(self.fieldname, self._value(value))
+        return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
     def __le__(self, value):
-        return '{}<={}'.format(self.fieldname, self._value(value))
+        return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
 class FloatField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -155,25 +173,28 @@ class FloatField:
         return False
     
     def _value(self, value):
-        return "{}".format(value)
+        if value is not None:
+            return "{}".format(value)
+        else:
+            return 'NULL'
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
     
     def __gt__(self, value):
-        return '{}>{}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}>{}'.format(self.fieldname, self._value(safe(value))))
     
     def __lt__(self, value):
-        return '{}<{}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}<{}'.format(self.fieldname, self._value(safe(value))))
     
     def __ge__(self, value):
-        return '{}>={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}>={}'.format(self.fieldname, self._value(safe(value))))
 
     def __le__(self, value):
-        return '{}<={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}<={}'.format(self.fieldname, self._value(safe(value))))
 
 class PrimaryKeyField():
     def __init__(self):
@@ -185,28 +206,31 @@ class PrimaryKeyField():
         return False
     
     def _value(self, value):
-        return '{}'.format(value)
+        if value is not None:
+            return "{}".format(value)
+        else:
+            return 'NULL'
     
     def _make_element(self):
         return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
     
     def __eq__(self, value):
-        return '{}={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
     
     def __ne__(self, value):
-        return '{}!={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
     
     def __gt__(self, value):
-        return '{}>{}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}>{}'.format(self.fieldname, self._value(safe(value))))
     
     def __lt__(self, value):
-        return '{}<{}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}<{}'.format(self.fieldname, self._value(safe(value))))
     
     def __ge__(self, value):
-        return '{}>={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}>={}'.format(self.fieldname, self._value(safe(value))))
 
     def __le__(self, value):
-        return '{}<={}'.format(self.fieldname, self._value(safe(value)))
+        return Query('{}<={}'.format(self.fieldname, self._value(safe(value))))
         
 
 field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
@@ -321,23 +345,22 @@ class Base:
         return True
     
     @classmethod
-    def search(cla, *querys):
+    def search(cla, query=None):
         cla._init()
         table = cla.Meta.table
         cursor = cla.Meta.db.cursor()
         fieldnames = cla._get_fields().keys()
         
         fieldnames_str = ','.join(fieldnames)
-        conditions_str = ' and '.join(querys)
-        if querys:
-            sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, table, conditions_str)
+        if query:
+            sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, table, query.condition)
         else:
             sentence = 'SELECT {} FROM {}'.format(fieldnames_str, table)
         if cursor.execute(sentence) == 0:
             return []
-        all_data = cursor.fetchall()
+        rows = cursor.fetchall()
         res = []
-        for one in all_data:
+        for one in rows:
             one = list(one)
             obj = cla()
             index = 0
