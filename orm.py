@@ -28,7 +28,7 @@ def safe(value):
 
 class Query:
     def __init__(self, condition):
-        self.condition = '({})'.format(condition)
+        self.condition = '{}'.format(condition)
     
     def __and__(self, obj):
         self.condition = '({})'.format(self.condition + ' AND ' + obj.condition)
@@ -64,7 +64,7 @@ class TextField:
     # 每个字段都实现这个方法:获取这个字段值的表达式比如INT和FLOAT分别是1,1.0,而TEXT,VARCHAR是'1'
     def _value(self, value):
         if value is not None:
-            return "'{}'".format(value)
+            return "'{}'".format(safe(value))
         else:
             return 'NULL'
 
@@ -89,7 +89,7 @@ class VarcharField:
     def _make_element(self):
         sentence = '{} VARCHAR({})'.format(self.fieldname, self.max_length)
         if self.default is not None:
-            sentence += " DEFAULT '{}'".format(self.default)
+            sentence += " DEFAULT '{}'".format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -103,19 +103,19 @@ class VarcharField:
     
     def _value(self, value):
         if value is not None:
-            return "'{}'".format(value)
+            return "'{}'".format(safe(value))
         else:
             return 'NULL'
     
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
-        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
-        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
         
 class IntField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -127,7 +127,7 @@ class IntField:
     def _make_element(self):
         sentence = '{} INT'.format(self.fieldname)
         if self.default is not None:
-            sentence += " DEFAULT {}".format(self.default)
+            sentence += " DEFAULT {}".format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -141,7 +141,7 @@ class IntField:
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(value)
+            return "{}".format(safe(value))
         else:
             return 'NULL'
 
@@ -177,7 +177,7 @@ class FloatField:
     def _make_element(self):
         sentence = '{} FLOAT'.format(self.fieldname)
         if self.default is not None:
-            sentence += " DEFAULT {}".format(self.default)
+            sentence += " DEFAULT {}".format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -191,31 +191,31 @@ class FloatField:
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(value)
+            return "{}".format(safe(value))
         else:
             return 'NULL'
     
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
-        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
-        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
     
     def __gt__(self, value):
-        return Query('{}>{}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}>{}'.format(self.fieldname, self._value(value)))
     
     def __lt__(self, value):
-        return Query('{}<{}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}<{}'.format(self.fieldname, self._value(value)))
     
     def __ge__(self, value):
-        return Query('{}>={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
     def __le__(self, value):
-        return Query('{}<={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
 class PrimaryKeyField():
     def __init__(self):
@@ -228,7 +228,7 @@ class PrimaryKeyField():
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(value)
+            return "{}".format(safe(value))
         else:
             return 'NULL'
     
@@ -238,24 +238,24 @@ class PrimaryKeyField():
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
-        return Query('{}={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
     
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
-        return Query('{}!={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
     
     def __gt__(self, value):
-        return Query('{}>{}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}>{}'.format(self.fieldname, self._value(value)))
     
     def __lt__(self, value):
-        return Query('{}<{}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}<{}'.format(self.fieldname, self._value(value)))
     
     def __ge__(self, value):
-        return Query('{}>={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
     def __le__(self, value):
-        return Query('{}<={}'.format(self.fieldname, self._value(safe(value))))
+        return Query('{}<={}'.format(self.fieldname, self._value(value)))
         
 
 field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
@@ -354,7 +354,7 @@ class Base:
                 if key == 'id' or data.get(key) is None:
                     continue
                 fieldnames.append(key)
-                values.append(value._value((safe((data.get(key))))))
+                values.append(value._value(((data.get(key)))))
             else:
                 raise TypeError('类型不匹配')
         fieldnames_str = ','.join(fieldnames)
@@ -411,7 +411,7 @@ class Base:
             value = current_data.get(field.fieldname)
             if not field._check(value):
                 raise TypeError('字段值未通过验证')
-            sets.append('{}={}'.format(field.fieldname,field._value(safe(value))))
+            sets.append('{}={}'.format(field.fieldname,field._value(value)))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
         cursor.execute(sentence)
