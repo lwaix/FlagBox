@@ -281,6 +281,12 @@ class Base:
                 raise Exception('未知的参数{}'.format(key))
         for key,value in fields.items():
             self.__setattr__(key,kwargs.get(key, None))
+        defaultable = (VarcharField, IntField, FloatField)
+        for field in fields.values():
+            if isinstance(field, defaultable):
+                if field.default is not None and self.__getattribute__(field.fieldname) is None:
+                    print(field, field.fieldname, field.default)
+                    self.__setattr__(field.fieldname,field.default)
 
     # 将字段名写入_field,将字段名写入对应字段对象,并标记已初始化
     @classmethod
