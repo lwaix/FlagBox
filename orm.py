@@ -2,10 +2,9 @@ import pymysql
 
 """
 计划:
-    - 重构代码并完善异常,命名,注释
-    - 查询支持and和or
-    - 新增Result类,包含排序,索引,批量删除等操作
-    - 完善README.md文件
+    - 重构代码并完善异常,命名
+    - 新增Result类,模拟list,包含排序,索引,批量删除等操作
+    - 完善README.md,usage.py文件
 约定:
     - 一个模型必须有id,类型为PrimaryKeyField作为它的主键
     - 不能自己在模型里面自己定义任何方法,或不属于Fields类型的字段
