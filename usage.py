@@ -21,14 +21,14 @@ user2 = User(username='xuri2', password='pass2', salary=80000.5)
 user2.insert()
 
 # 删
-user = User.search(User.username == 'xuri')[0]
+user = User.search(User.username == 'xuri').all()[0]
 user.delete()
 
 # 查
-user = User.search(User.username == 'xuri2')[0]
+user = User.search(User.username == 'xuri2').all()[0]
 print(user.id, user.username, user.password, user.salary, user.comment)
 
 # 改
-user = User.search(User.username == 'xuri2')[0]
+user = User.search(User.username == 'xuri2').all()[0]
 user.username = 'xuri2edit'
 user.update()

@@ -1,9 +1,8 @@
 import pymysql
 
 """
-计划:
+TODO:
     - 重构代码并完善异常,命名
-    - 新增Result类,模拟list,包含排序,索引,批量删除等操作
     - 完善README.md,usage.py文件
 约定:
     - 一个模型必须有id,类型为PrimaryKeyField作为它的主键
@@ -41,6 +40,26 @@ class Query:
     def __or__(self, obj):
         self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
+
+"""
+all = User.search(User.username=='xuri').all()
+first = User.search(User.username=='xuri').first()
+last = User.search(User.username=='xuri').last()
+all2 = User.search(User.username=='xuri', order=[-User.username, +User.username]).update
+"""
+class Result:
+    def __init__(self, results):
+        self.results = results
+    
+    def first(self):
+        return self.results[0]
+
+    def last(self):
+        return self.results[-1]
+    
+    def all(self):
+        return self.results
+    
 
 # ===Fields===
 # 对应Mysql的TEXT字段
@@ -85,6 +104,14 @@ class TextField:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
 
+    # +:用于search降序排列
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    # -:用于search升序排列
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
+
 # 对于Mysql字段VARCHAR
 class VarcharField:
     def __init__(self, max_length=256, nullable=True, unique=False, default=None):
@@ -124,6 +151,12 @@ class VarcharField:
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
+    
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段INT
 class IntField:
@@ -176,6 +209,12 @@ class IntField:
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
+
 # 对应Mysql字段FLOAT
 class FloatField:
     def __init__(self, nullable=True, unique=False, default=None):
@@ -227,6 +266,12 @@ class FloatField:
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
+
 # id字段,是这个orm得以正常运作的前提,每个Model都必须包含这个字段: id = PrimaryKeyField()
 class PrimaryKeyField():
     def __init__(self):
@@ -267,6 +312,12 @@ class PrimaryKeyField():
 
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
+
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
         
 
 field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
@@ -395,9 +446,9 @@ class Base:
             return False
         return True
     
-    # 查询所有符合条件的结果,封装为Model对象并返回
+    # 查询所有符合条件的结果,封装为Result对象并返回
     @classmethod
-    def search(cla, query=None):
+    def search(cla, query=None, orders=None):
         cla._init()
         table = cla.Meta.table
         cursor = cla.Meta.db.cursor()
@@ -409,6 +460,14 @@ class Base:
             sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, table, query.condition)
         else:
             sentence = 'SELECT {} FROM {}'.format(fieldnames_str, table)
+        if orders:
+            o = []
+            for order in orders:
+                if isinstance(order, field_types):
+                    o.append(order.fieldname)
+                if isinstance(order, str):
+                    o.append(order)
+            sentence = "{} ORDER BY {}".format(sentence, ','.join(o))
         # 当查询结果为0时
         if cursor.execute(sentence) == 0:
             return []
@@ -423,7 +482,7 @@ class Base:
                 obj.__setattr__(list(fieldnames)[index], one[index])
                 index += 1
             res.append(obj)
-        return res
+        return Result(res)
     
     # 更新该对象
     def update(self):
@@ -460,4 +519,5 @@ class Base:
 
         sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
         cursor.execute(sentence)
+        self.id = None
         db.commit()
