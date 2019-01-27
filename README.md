@@ -1,48 +1,65 @@
-### 支持版本:python3
+## pmorm.py - A simple mysql orm for python3 users
 
-#### 基本使用
+#### usage
 
-```
-from pmorm import *
+```python
+from pmorm import Mysql, Base, PrimaryKeyField, VarcharField
 
 class User(Base):
     class Meta:
-        # 连接数据库,连接前要手动创建数据库
-        db = Mysql(host='localhost', user='root', password='your-password', database='your-database')
-        # 表名
+        db = Mysql('localhost', 'root', 'xuri', 'test1db')
         table = 'user'
-    # id字段,每个模型都必须定义此字段,才得以正常工作
+
     id = PrimaryKeyField()
-    # 定义字段,字段名是定义的变量名称
-    # 支持的字段类型:VARCHAR,Text,Int,Float
-    username = VarcharField(max_length=32,nullable=False,unique=True)
-    password = VarcharField(max_length=64, nullable=False, unique=False)
-    comment = TextField(nullable=True, unique=False)
-    salary = FloatField(nullable=False, unique=False, default=0.0)
+    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
+    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
-# 如果表不存在就建表,会自动为你创建一个自增的id字段(数据库的删除查询修改都要依赖它)
+User.drop_table()
 User.create_table()
-# 删表语句User.drop_table()
 
-# 增
-user1 = User(username='xuri', password='pass', salary=3000.0)
+user1 = User(username='user1', password='password1')
+user2 = User(username='user2', password='password2')
+
+# 插入
+print(user1.inserted())
 user1.insert()
-
-user2 = User(username='xuri2', password='pass2', salary=80000.5)
+print(user1.inserted())
 user2.insert()
 
-# 查
-# 查询支持Query语句,IntField和FloatField支持>,<,>=,<=,==,!= StringField支持==,!=
-# 注意:不能查询id,如果要根据id查询,使用User.get_by_id(id)
-user = User.search(User.username == 'xuri2')[0]
-print(user.id, user.username, user.password, user.salary)
+print('===========SPLIT==============')
 
-# 删
-user = User.search(User.username == 'xuri')[0]
-user.delete()
+# 查询
+# 无条件查询:返回所有对象
+users = User.search().all()
+for user in users:
+    print(user.username)
+# 有条件查询:返回符合条件的对象
+user = User.search(
+    (User.username=='user1') & (User.password=='password1')
+).first()
+print(user.username)
+# 允许排序
+users = User.search(
+    (User.username!='It is impossible to be the username'),
+    [-User.username]
+).all()
+for user in users:
+    print(user.username)
 
-# 改
-user = User.search(User.username == 'xuri2')[0]
-user.username = 'xuri2edit'
-user.update()
+print('===========SPLIT==============')
+
+# 修改
+user1.username = 'editedusername'
+user1.update()
+users = User.search().all()
+for user in users:
+    print(user.username)
+
+print('===========SPLIT==============')
+
+# 删除
+user1.delete()
+users = User.search().all()
+for user in users:
+    print(user.username)
 ```

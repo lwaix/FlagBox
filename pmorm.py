@@ -9,11 +9,6 @@ TODO:
     - 不能自己在模型里面自己定义任何方法,或不属于Fields类型的字段
 """
 
-"""
-NOTES:
-    比较运算对象?
-"""
-
 # 返回一个pymysql.Connection对象
 def Mysql(host, user, password, database):
     return pymysql.connect(host, user, password, database)
@@ -470,7 +465,7 @@ class Base:
             sentence = "{} ORDER BY {}".format(sentence, ','.join(o))
         # 当查询结果为0时
         if cursor.execute(sentence) == 0:
-            return []
+            return Result([])
         rows = cursor.fetchall()
         res = []
         # 将查询结果封装为Model对象

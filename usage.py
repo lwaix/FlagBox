@@ -1,34 +1,59 @@
-from pmorm import *
+from pmorm import Mysql, Base, PrimaryKeyField, VarcharField
 
 class User(Base):
     class Meta:
-        db = Mysql(host='localhost', user='root', password='xuri', database='testdb')
+        db = Mysql('localhost', 'root', 'xuri', 'test1db')
         table = 'user'
+
     id = PrimaryKeyField()
-    username = VarcharField(max_length=32,nullable=False,unique=True)
-    password = VarcharField(max_length=64, nullable=False, unique=False)
-    comment = TextField(nullable=True, unique=False)
-    salary = FloatField(nullable=False, unique=False, default=0.0)
+    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
+    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
 User.drop_table()
 User.create_table()
 
-# 增
-user1 = User(username='xuri', password='pass', salary=3000.0)
-user1.insert()
+user1 = User(username='user1', password='password1')
+user2 = User(username='user2', password='password2')
 
-user2 = User(username='xuri2', password='pass2', salary=80000.5)
+# 插入
+print(user1.inserted())
+user1.insert()
+print(user1.inserted())
 user2.insert()
 
-# 删
-user = User.search(User.username == 'xuri').all()[0]
-user.delete()
+print('===========SPLIT==============')
 
-# 查
-user = User.search(User.username == 'xuri2').all()[0]
-print(user.id, user.username, user.password, user.salary, user.comment)
+# 查询
+# 无条件查询:返回所有对象
+users = User.search().all()
+for user in users:
+    print(user.username)
+# 有条件查询:返回符合条件的对象
+user = User.search(
+    (User.username=='user1') & (User.password=='password1')
+).first()
+print(user.username)
+# 允许排序
+users = User.search(
+    (User.username!='It is impossible to be the username'),
+    [-User.username]
+).all()
+for user in users:
+    print(user.username)
 
-# 改
-user = User.search(User.username == 'xuri2').all()[0]
-user.username = 'xuri2edit'
-user.update()
+print('===========SPLIT==============')
+
+# 修改
+user1.username = 'editedusername'
+user1.update()
+users = User.search().all()
+for user in users:
+    print(user.username)
+
+print('===========SPLIT==============')
+
+# 删除
+user1.delete()
+users = User.search().all()
+for user in users:
+    print(user.username)
