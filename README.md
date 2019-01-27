@@ -1,4 +1,4 @@
-## pmorm.py - A simple mysql orm for python3 users
+## pmorm.py - a simple mysql orm for python3 users
 
 #### usage
 
