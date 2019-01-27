@@ -2,7 +2,7 @@ import pymysql
 
 """
 TODO:
-    - 重构代码并完善异常,命名
+    - 重构代码并完善异常,命名,单测
     - 完善README.md,usage.py文件
 约定:
     - 一个模型必须有id,类型为PrimaryKeyField作为它的主键

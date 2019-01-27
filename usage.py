@@ -1,4 +1,4 @@
-from orm import *
+from pmorm import *
 
 class User(Base):
     class Meta:

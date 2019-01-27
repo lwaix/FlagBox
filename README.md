@@ -3,7 +3,7 @@
 #### 基本使用
 
 ```
-from orm import *
+from pmorm import *
 
 class User(Base):
     class Meta:
