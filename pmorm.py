@@ -4,9 +4,6 @@ import pymysql
 TODO:
     - 重构代码并完善异常,命名,单测
     - 完善README.md,usage.py文件
-约定:
-    - 一个模型必须有id,类型为PrimaryKeyField作为它的主键
-    - 不能自己在模型里面自己定义任何方法,或不属于Fields类型的字段
 """
 
 # 返回一个pymysql.Connection对象
@@ -36,12 +33,7 @@ class Query:
         self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
 
-"""
-all = User.search(User.username=='xuri').all()
-first = User.search(User.username=='xuri').first()
-last = User.search(User.username=='xuri').last()
-all2 = User.search(User.username=='xuri', order=[-User.username, +User.username]).update
-"""
+# 封装查询结果
 class Result:
     def __init__(self, results):
         self.results = results
@@ -353,13 +345,18 @@ class Base:
     def _init(cla):
         # 检查是否已初始化
         if not cla._init_sign:
+            id_sign = False
             for key,value in cla.__dict__.items():
+                if (not id_sign) and (key == 'id' and isinstance(value, PrimaryKeyField)):
+                    id_sign = True
                 # 如果类对象属于Fields,那么说明它就是被定义在Model中的字段,将它写入_fields
                 # _fields的格式:{fieldname1:field_obj1, fieldname2:field_obj2,...}
                 if isinstance(value, field_types):
                     # field对象也包含fieldname,需要赋值给它已保证其正常工作
                     value.fieldname = key
                     cla._fields[key] = value
+            if not id_sign:
+                raise Exception('该模型未定义id字段')
             # 标记已经初始化
             cla._init_sign = True
 

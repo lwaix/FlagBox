@@ -1,4 +1,4 @@
-## pmorm.py - a simple mysql orm for python3 users
+## pmorm.py - a simple mysql orm for python3
 
 #### usage
 
@@ -62,4 +62,10 @@ user1.delete()
 users = User.search().all()
 for user in users:
     print(user.username)
+
+"""
+约定:
+    - 每个模型都必须包含id字段
+    - 不要在模型中定义除了字段以外的其他东西
+"""
 ```
