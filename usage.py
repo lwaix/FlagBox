@@ -5,11 +5,12 @@ class User(Base):
         db = Mysql('localhost', 'root', 'xuri', 'test1db')
         table = 'user'
 
+    # id是每个模型必须包含的字段,没有它pmorm将无法正常运作
     id = PrimaryKeyField()
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
-User.drop_table()
+# 建表(如果表已经创建,则不重复创建)
 User.create_table()
 
 user1 = User(username='user1', password='password1')

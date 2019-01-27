@@ -339,7 +339,7 @@ class Base:
             if key not in fieldnames:
                 raise Exception('未知的参数{}'.format(key))
         # 设置对象的值
-        for key,value in fields.items():
+        for key in fields.keys():
             self.__setattr__(key,kwargs.get(key, None))
         # 对于某些定义的default的Model,会给它赋上default值
         defaultable = (VarcharField, IntField, FloatField)
@@ -373,7 +373,6 @@ class Base:
         fields = self.__class__._get_fields()
         res = {}
         for fieldname in fields.keys():
-            value = self.__getattribute__(fieldname)
             res[fieldname] = self.__getattribute__(fieldname)
         return res
 
@@ -388,7 +387,7 @@ class Base:
         fields = cla._get_fields()
 
         field_elements = []
-        for key,value in fields.items():
+        for value in fields.values():
             field_elements.append(value._make_element())
         
         sentence = 'CREATE TABLE IF NOT EXISTS {} ({})'.format(table, ','.join(field_elements))
