@@ -2,6 +2,12 @@
 
 ### Usage
 
+#### Before using,install pymysql
+
+```
+pip install pymysql
+```
+
 #### Create a mysql database connection
 
 ```python
