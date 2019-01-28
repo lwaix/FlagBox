@@ -4,6 +4,7 @@ import pymysql
 TODO:
     - 重构代码并完善异常,命名,单测
     - 完善README.md,usage.py文件
+    - 完善FLOAT对INT类型的适配
 """
 
 # 返回一个pymysql.Connection对象
@@ -329,7 +330,7 @@ class Base:
         # 检查未知的参数
         for key in kwargs.keys():
             if key not in fieldnames:
-                raise Exception('未知的参数{}'.format(key))
+                raise ValueError('未知的参数{}'.format(key))
         # 设置对象的值
         for key in fields.keys():
             self.__setattr__(key,kwargs.get(key, None))
@@ -356,7 +357,7 @@ class Base:
                     value.fieldname = key
                     cla._fields[key] = value
             if not id_sign:
-                raise Exception('该模型未定义id字段')
+                raise AttributeError('该模型未定义id字段')
             # 标记已经初始化
             cla._init_sign = True
 
@@ -404,7 +405,7 @@ class Base:
     def insert(self):
         # 被插入过的对象无法被重复插入
         if self.inserted():
-            raise Exception("该对象已被插入,不可重复插入")
+            raise RuntimeError("该对象已被插入,不可重复插入")
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
@@ -479,7 +480,7 @@ class Base:
     def update(self):
         # 没有被插入的对象无法更新
         if not self.inserted():
-            raise Exception('该对象不可更新')
+            raise RuntimeError('该对象不可更新')
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
@@ -491,7 +492,7 @@ class Base:
         for field in fields.values():
             value = current_data.get(field.fieldname)
             if not field._check(value):
-                raise TypeError('字段值未通过验证')
+                raise TypeError('字段值类型不匹配')
             sets.append('{}={}'.format(field.fieldname,field._value(value)))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
@@ -502,7 +503,7 @@ class Base:
     def delete(self):
         # 没被插入的无法被删除
         if not self.inserted():
-            raise Exception('该对象不可删除')
+            raise RuntimeError('该对象不可删除')
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
