@@ -327,8 +327,11 @@ class Base:
         # 如果id为None说明该对象还未被插入
         fields = self.__class__._get_fields()
         fieldnames = fields.keys()
+        keys = kwargs.keys()
+        if 'id' in keys:
+            raise ValueError('id不能被手动赋值')
         # 检查未知的参数
-        for key in kwargs.keys():
+        for key in keys:
             if key not in fieldnames:
                 raise ValueError('未知的参数{}'.format(key))
         # 设置对象的值
