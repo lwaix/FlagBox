@@ -100,7 +100,7 @@ user1.insert()
 print(user1.inserted())
 user2.insert()
 
-print('===========SPLIT==============')
+print('===========SPLIT===========')
 
 # Search
 # Unconditional query: Returns all
@@ -120,7 +120,7 @@ users = User.search(
 for user in users:
     print(user.username)
 
-print('===========SPLIT==============')
+print('===========SPLIT===========')
 
 # Edit
 user1.username = 'editedusername'
@@ -129,7 +129,7 @@ users = User.search().all()
 for user in users:
     print(user.username)
 
-print('===========SPLIT==============')
+print('===========SPLIT===========')
 
 # Delete
 user1.delete()

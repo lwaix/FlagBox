@@ -54,6 +54,15 @@ class Test(unittest.TestCase):
         cursor = db.cursor()
         num = cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
         self.assertEqual(num, 0)
+    
+    def test_f_drop_table(self):
+        User.drop_table()
+        try:
+            cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
+            sign = 0
+        except:
+            sign = 1
+        self.assertEqual(sign, 1)
 
 if __name__ == '__main__':
     unittest.main()

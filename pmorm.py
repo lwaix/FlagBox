@@ -2,9 +2,8 @@ import pymysql
 
 """
 TODO:
-    - 重构代码并完善异常,命名,单测
-    - 完善README.md,usage.py文件
-    - 完善FLOAT对INT类型的适配
+    - 重构代码
+    - 英文注释
 """
 
 # 返回一个pymysql.Connection对象
@@ -222,7 +221,8 @@ class FloatField:
         return sentence
     
     def _check(self, value):
-        if isinstance(value, float) or (value is None and self.nullable):
+        # FLOAT同样支持INT
+        if isinstance(value, (float, int)) or (value is None and self.nullable):
             return True
         return False
     
