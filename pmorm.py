@@ -319,7 +319,6 @@ class Base:
 
     # 在每个操作里面都检查是否init,仅仅执行一次_init()方法
     _init_sign = False
-    _fields = {}
 
     # 接收本对象的各个字段值,没有赋值的默认为None
     def __init__(self, **kwargs):
@@ -349,8 +348,6 @@ class Base:
     def _init(cla):
         # 检查是否已初始化
         if not cla._init_sign:
-            # 魔法
-            cla._fields = {}
             id_sign = False
             for key,value in cla.__dict__.items():
                 if (not id_sign) and (key == 'id' and isinstance(value, PrimaryKeyField)):
