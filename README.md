@@ -1,22 +1,32 @@
-## pmorm.py - a simple mysql orm for python3
+# pmorm.py - a simple mysql orm for python3
 
-### Usage
+## Usage
 
-#### Before using,install pymysql
+### Before using
+
+#### Install pymysql
 
 ```
 pip install pymysql
 ```
 
+#### Create a database for the program
+
+```
+mysql>CREATE DATABASE testdb;
+```
+
+### Quick start
+
 #### Create a mysql database connection
 
 ```python
-from pmorm import mysql
+from pmorm import Mysql
 
-mydb = Mysql('localhost', 'root', 'xuri', 'test1db')
+mydb = Mysql('localhost', 'root', 'passwd', 'testdb')
 ```
 
-#### Create a model
+#### Create a model and create the table
 
 ```python
 from pmorm import Base, PrimaryKeyField, VarcharField
@@ -30,8 +40,10 @@ class User(Base):
 
     # You need to define fields in the class like this
     id = PrimaryKeyField()  # The id field must be defined in a model so that pmorm can work properly
-    username = VarcherField(max_length=32, nullable=False, unique=True, default=None)
-    password = VarcherField(max_length=64, nullable=False, unique=False, default=None)
+    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
+    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
+
+User.create_table()
 ```
 
 #### Insert one row

@@ -2,7 +2,7 @@ from pmorm import Mysql, Base, PrimaryKeyField, VarcharField
 
 class User(Base):
     class Meta:
-        db = Mysql('localhost', 'root', 'xuri', 'test1db')
+        db = Mysql('localhost', 'root', 'xuri', 'testdb')
         table = 'user'
 
     # id是每个模型必须包含的字段,没有它pmorm将无法正常运作
