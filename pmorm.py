@@ -349,6 +349,8 @@ class Base:
     def _init(cla):
         # 检查是否已初始化
         if not cla._init_sign:
+            # 魔法
+            cla._fields = {}
             id_sign = False
             for key,value in cla.__dict__.items():
                 if (not id_sign) and (key == 'id' and isinstance(value, PrimaryKeyField)):
