@@ -1,14 +1,14 @@
 # pmorm.py - a simple mysql orm for python3
 
+## Install pmorm
+
+```
+python3 .\setup.py install --user
+```
+
 ## Usage
 
 ### Before using
-
-#### Install pymysql
-
-```
-pip install pymysql
-```
 
 #### Create a database for the program
 
