@@ -393,16 +393,21 @@ class Base:
         
         sentence = 'CREATE TABLE IF NOT EXISTS {} ({})'.format(table, ','.join(field_elements))
         cursor.execute(sentence)
+        cursor.close()
+        db.commit()
     
     # 删表操作
     @classmethod
     def drop_table(cla):
         cla._init()
+        db = cla.Meta.db
         table = cla.Meta.table
         cursor = cla.Meta.db.cursor()
 
         sentence = 'DROP TABLE IF EXISTS {}'.format(table)
         cursor.execute(sentence)
+        cursor.close()
+        db.commit()
     
     # 插入操作
     def insert(self):
@@ -432,6 +437,7 @@ class Base:
         cursor.execute(sentence)
         # 标记该对象id
         self.id = cursor.lastrowid
+        cursor.close()
         db.commit()
     
     # 如果对象已被插入则返回True
@@ -445,6 +451,7 @@ class Base:
     @classmethod
     def search(cla, query=None, orders=None):
         cla._init()
+        db = cla.Meta.db
         table = cla.Meta.table
         cursor = cla.Meta.db.cursor()
         fieldnames = cla._get_fields().keys()
@@ -464,8 +471,7 @@ class Base:
                     o.append(order)
             sentence = "{} ORDER BY {}".format(sentence, ','.join(o))
         # 当查询结果为0时
-        if cursor.execute(sentence) == 0:
-            return Result([])
+        cursor.execute(sentence)
         rows = cursor.fetchall()
         res = []
         # 将查询结果封装为Model对象
@@ -477,6 +483,8 @@ class Base:
                 obj.__setattr__(list(fieldnames)[index], one[index])
                 index += 1
             res.append(obj)
+        cursor.close()
+        db.commit()
         return Result(res)
     
     # 更新该对象
@@ -500,6 +508,7 @@ class Base:
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
         cursor.execute(sentence)
+        cursor.close()
         db.commit()
     
     # 删除该对象
@@ -515,4 +524,5 @@ class Base:
         sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
         cursor.execute(sentence)
         self.id = None
+        cursor.close()
         db.commit()
