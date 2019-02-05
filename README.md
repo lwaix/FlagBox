@@ -23,7 +23,7 @@ mysql>CREATE DATABASE testdb;
 ```python
 from pmorm import Mysql
 
-mydb = Mysql('localhost', 'root', 'passwd', 'testdb')
+mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 ```
 
 #### Create a model and create the table
@@ -31,18 +31,19 @@ mydb = Mysql('localhost', 'root', 'passwd', 'testdb')
 ```python
 from pmorm import Base, PrimaryKeyField, VarcharField
 
-# Inheriting the Base class is a must
+# Model class
 class User(Base):
-    # Built-in class Meta parameters for configuring the database and table
+    # Built-in class Meta for configuring database and table
     class Meta:
         db = mydb
         table = 'user'
 
-    # You need to define fields in the class like this
-    id = PrimaryKeyField()  # The id field must be defined in a model so that pmorm can work properly
+    # Define fields in a model
+    id = PrimaryKeyField()  # ID field must be defined like this
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
+# Create table if it hasn't been created
 User.create_table()
 ```
 
@@ -50,46 +51,83 @@ User.create_table()
 
 ```python
 # A easy way to insert
-user1 = User(username='user1', password='passwd')
+user1 = User(username='user1', password='passwd1')
 user1.insert()
 
 # You can also insert like this
 user2 = User()
-print(user2.inserted()) # You can cheak if the object has been inserted into the database
 user2.username = 'user2'
-user2.password = 'passwd'
+user2.password = 'passwd2'
 user2.insert()
-print(user2.inserted())
+
+# You can modify it before inserting
+user3 = User(username='userx')
+user3.username = 'user3'
+user3.password = 'passwd3'
+user3.insert()
+
+# Cheak if objects has been inserted
+print(user1.inserted()) # True
 ```
 
 #### Search rows
 
 ```python
-user = User.search(User.username == 'user1').first()
-# rows = User.search(User.username != 'user').all()[0]
-# rows = User.search(User.id <= 2).last()
-print(user.id, user.username, user.password)
+# Get all rows
+users = User.search().all()
+for user in users:
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+
+# Search by one condition
+users = User.search(User.username != 'unkonw').all()
+for user in users:
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+
+# Search by conditions of the combination
+user1 = User.search(
+    (User.username=='user1') & (User.password=='passwd1')
+).first()
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+
+# Sort by using the "orders" option
+users = User.search(
+    (User.username!='user1') | (User.password!='passwd1'),
+    orders=[User.id]
+).all()
+for user in users:
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 ```
+
+##### Attention: search() return a "Result" object, you can get specific data by its methods all() and first()
 
 #### Edit rows
 
 ```python
-user.username = 'edit'
-user.update()
+# Get one user
+user1 = User.search(
+    ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # Complex queries
+).first()
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+# Edit it and update
+user1.username = 'edit'
+user1.update()
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 ```
 
 #### Delete rows
 
 ```python
-user.delete()
+user1.delete()
 ```
 
 ### A full example
 
 ```python
-from pmorm import Mysql, Base, PrimaryKeyField, VarcharField
+from pmorm import Mysql
 
-mydb = Mysql('localhost', 'root', 'xuri', 'test1db')
+mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
+
+from pmorm import Base, PrimaryKeyField, VarcharField
 
 class User(Base):
     class Meta:
@@ -103,49 +141,60 @@ class User(Base):
 User.drop_table()
 User.create_table()
 
-user1 = User(username='user1', password='password1')
-user2 = User(username='user2', password='password2')
-
-# Insert
-print(user1.inserted())
+user1 = User(username='user1', password='passwd1')
 user1.insert()
-print(user1.inserted())
+
+user2 = User()
+user2.username = 'user2'
+user2.password = 'passwd2'
 user2.insert()
 
-print('===========SPLIT===========')
+user3 = User(username='userx')
+user3.username = 'user3'
+user3.password = 'passwd3'
+user3.insert()
 
-# Search
-# Unconditional query: Returns all
+print("===SIGN1===")
+
+print(user1.inserted())
+
+print("===SIGN2===")
+
 users = User.search().all()
 for user in users:
-    print(user.username)
-# Conditional query
-user = User.search(
-    (User.username=='user1') & (User.password=='password1')
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+
+print("===SIGN3===")
+
+users = User.search(User.username != 'unkonw').all()
+for user in users:
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+
+print("===SIGN4===")
+
+user1 = User.search(
+    (User.username=='user1') & (User.password=='passwd1')
 ).first()
-print(user.username)
-# Order by...
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+
+print("===SIGN5===")
+
 users = User.search(
-    (User.username!='It is impossible to be the username'),
-    [-User.username]
+    (User.username!='user1') | (User.password!='passwd1'),
+    orders=[-User.id]
 ).all()
 for user in users:
-    print(user.username)
+    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-print('===========SPLIT===========')
+print("===SIGN6===")
 
-# Edit
-user1.username = 'editedusername'
+user1 = User.search(
+    ((User.username=='user1') | (User.password=='passwd1') & (User.id==1))
+).first()
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+user1.username = 'edituser1'
 user1.update()
-users = User.search().all()
-for user in users:
-    print(user.username)
+print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 
-print('===========SPLIT===========')
-
-# Delete
 user1.delete()
-users = User.search().all()
-for user in users:
-    print(user.username)
 ```
