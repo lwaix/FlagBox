@@ -1,8 +1,8 @@
-##### [中文文档-Chinese](https://github.com/lwaix/Pmorm/blob/master/README-zh.md "中文文档-Chinese")
+##### [中文-Chinese](https://github.com/lwaix/Pmorm/blob/master/README-zh.md "中文-Chinese")
 
 # pmorm.py - a simple mysql orm for python3
 
-## Install pmorm
+## Installing
 
 ```
 python3 .\setup.py install --user
@@ -41,7 +41,7 @@ class User(Base):
         table = 'user'
 
     # Define fields in a model
-    id = PrimaryKeyField()  # ID field must be defined like this
+    id = PrimaryKeyField()  # id field must be defined like this
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
@@ -49,20 +49,20 @@ class User(Base):
 User.create_table()
 ```
 
-#### Insert one row
+#### Inserting
 
 ```python
-# A easy way to insert
+# A easy way
 user1 = User(username='user1', password='passwd1')
 user1.insert()
 
-# You can also insert like this
+# Another way
 user2 = User()
 user2.username = 'user2'
 user2.password = 'passwd2'
 user2.insert()
 
-# You can modify it before inserting
+# Modify it before inserting
 user3 = User(username='userx')
 user3.username = 'user3'
 user3.password = 'passwd3'
@@ -75,7 +75,7 @@ print(user1.inserted()) # True
 #### Search rows
 
 ```python
-# Get all rows
+# Get all and print them one by one
 users = User.search().all()
 for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
@@ -85,7 +85,7 @@ users = User.search(User.username != 'unkonw').all()
 for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# Search by conditions of the combination
+# Search by conditions of the combination(using & and | operators)
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
@@ -102,10 +102,10 @@ for user in users:
 
 ##### Attention: search() return a "Result" object, you can get specific data by its methods all() and first()
 
-#### Edit rows
+#### Editing
 
 ```python
-# Get one user
+# Get one user first
 user1 = User.search(
     ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # Complex queries
 ).first()
@@ -116,87 +116,41 @@ user1.update()
 print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 ```
 
-#### Delete rows
+#### Deleting
 
 ```python
 user1.delete()
 ```
 
-### A full example
+### About Mysql() function
+
+#### The code of Mysql() function
 
 ```python
-from pmorm import Mysql
+def Mysql(*args, **kwargs):
+    return pymysql.connect(*args, **kwargs)
+```
 
+#### The Mysql() function is actually the encapsulation of the pymysql.connect() function, which has more parameters, see pymysql documentation
+
+### Currently supported MySQL fields
+
+Pmorm|Mysql
+--|:--:
+PrimaryKeyField|NO
+IntField|INT
+FloatField|FLOAT
+VarcharField|VARCHAR
+TextField|TEXT
+
+#### PrimaryKeyField must be defined in each model, so a basic model looks like...
+
+```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
-
-from pmorm import Base, PrimaryKeyField, VarcharField
-
-class User(Base):
+class ModelName(Base):
     class Meta:
         db = mydb
-        table = 'user'
-
+        table = 'mytable'
     id = PrimaryKeyField()
-    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
-    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
-
-User.drop_table()
-User.create_table()
-
-user1 = User(username='user1', password='passwd1')
-user1.insert()
-
-user2 = User()
-user2.username = 'user2'
-user2.password = 'passwd2'
-user2.insert()
-
-user3 = User(username='userx')
-user3.username = 'user3'
-user3.password = 'passwd3'
-user3.insert()
-
-print("===SIGN1===")
-
-print(user1.inserted())
-
-print("===SIGN2===")
-
-users = User.search().all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
-
-print("===SIGN3===")
-
-users = User.search(User.username != 'unkonw').all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
-
-print("===SIGN4===")
-
-user1 = User.search(
-    (User.username=='user1') & (User.password=='passwd1')
-).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
-
-print("===SIGN5===")
-
-users = User.search(
-    (User.username!='user1') | (User.password!='passwd1'),
-    orders=[-User.id]
-).all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
-
-print("===SIGN6===")
-
-user1 = User.search(
-    ((User.username=='user1') | (User.password=='passwd1') & (User.id==1))
-).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
-user1.username = 'edituser1'
-user1.update()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
-
-user1.delete()
+    # Other fields...
 ```

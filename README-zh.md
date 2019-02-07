@@ -1,4 +1,4 @@
-# pmorm.py - 一个简约的python3 mysql orm
+# pmorm.py - 简约的Python3 Mysql ORM
 
 ## 安装
 
@@ -10,7 +10,7 @@ python3 .\setup.py install --user
 
 ### 使用前
 
-#### 为程序创建一个mysql数据库
+#### 为程序创建数据库
 
 ```
 mysql>CREATE DATABASE testdb;
@@ -19,7 +19,7 @@ mysql>CREATE DATABASE testdb;
 
 ### 快速开始
 
-##### 创建mysql连接
+##### 建立Mysql连接
 
 ```python
 from pmorm import Mysql
@@ -32,7 +32,7 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 ```python
 from pmorm import Base, PrimaryKeyField, VarcharField
 
-# 模型类User
+# 定义模型类User
 class User(Base):
     # 内置类Meta被用来配置数据库与表名
     class Meta:
@@ -51,7 +51,7 @@ User.create_table()
 #### 插入
 
 ```python
-# 简单地插入一条
+# 简单插入
 user1 = User(username='user1', password='passwd1')
 user1.insert()
 
@@ -61,31 +61,30 @@ user2.username = 'user2'
 user2.password = 'passwd2'
 user2.insert()
 
-# 在插入前可以修改
+# 插入前可修改
 user3 = User(username='userx')
 user3.username = 'user3'
 user3.password = 'passwd3'
 user3.insert()
 
-# 使用inserted()方法检查对象是否被插入,且被插入的对象无法被重复插入
+# inserted() 方法检查对象是否被插入(被插入的对象无法被重复插入)
 print(user1.inserted()) # True
 ```
 
 #### 搜索
 
 ```python
-# 获取所有内容
+# 获取所有内容并逐个遍历
 users = User.search().all()
-# 逐个遍历并输出其内容
 for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# 有条件的查询
+# 条件查询
 users = User.search(User.username != 'unkonw').all()
 for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# 组合复杂查询(利用|和&运算符)
+# 组合查询(利用|和&运算符)
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
@@ -100,12 +99,12 @@ for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 ```
 
-##### 注意: search()方法返回一个 Result 对象, 可以使用它的方法 all() 获取所有对象(list), 与 first() 得到第一个
+##### 注意: search()方法返回一个 Result 对象, 可以使用它的方法 all() 获取所有对象(返回list), 与 first() 得到第一个
 
 #### 更新
 
 ```python
-# 首先搜素获取对象
+# 首先获取对象
 user1 = User.search(
     ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # 复杂查询
 ).first()
@@ -120,7 +119,7 @@ print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.pas
 #### 删除
 
 ```python
-# 首先查询获取对象
+# 首先获取对象
 user1 = User.search(User.username=='edit').first()
 # 删除
 user1.delete()
@@ -128,18 +127,18 @@ user1.delete()
 
 ---
 
-### 关于 Mysql() 方法
+### 关于 Mysql() 函数
 
-#### Mysql() 实际代码
+#### Mysql() 函数实际代码
 
 ```python
 def Mysql(*args, **kwargs):
     return pymysql.connect(*args, **kwargs)
 ```
 
-#### Mysql() 方法实际是 pymysql.connect() 方法的封装,它的更多的参数,请参见pymysql文档
+#### Mysql() 函数实际是 pymysql.connect() 函数的封装,它的更多的参数,请参见pymysql文档
 
-### Pmorm目前支持的字段类型
+### 目前支持的字段类型
 
 Pmorm|Mysql
 --|:--:
@@ -149,7 +148,7 @@ FloatField|FLOAT
 VarcharField|VARCHAR
 TextField|TEXT
 
-#### 其中 PrimaryKeyField 是每个模型必须定义的,也是Pmorm工作的前提,所以一个基本的Model定义看起来像这样
+#### 其中 PrimaryKeyField 是每个模型必须定义的,也是Pmorm工作的前提,所以一个基本的模型定义看起来像这样
 
 ```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
