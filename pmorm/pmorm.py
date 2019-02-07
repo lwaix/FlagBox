@@ -7,8 +7,8 @@ TODO:
 """
 
 # 返回一个pymysql.Connection对象
-def Mysql(host, user, password, database):
-    return pymysql.connect(host, user, password, database)
+def Mysql(*args, **kwargs):
+    return pymysql.connect(*args, **kwargs)
 
 # 将值转安全转意,防止注入
 def safe(value):

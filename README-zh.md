@@ -48,9 +48,7 @@ class User(Base):
 User.create_table()
 ```
 
-#### 插入数据
-
-#### Insert one row
+#### 插入
 
 ```python
 # 简单地插入一条
@@ -126,4 +124,40 @@ print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.pas
 user1 = User.search(User.username=='edit').first()
 # 删除
 user1.delete()
+```
+
+---
+
+### 关于 Mysql() 方法
+
+#### Mysql() 实际代码
+
+```python
+def Mysql(*args, **kwargs):
+    return pymysql.connect(*args, **kwargs)
+```
+
+#### Mysql() 方法实际是 pymysql.connect() 方法的封装,它的更多的参数,请参见pymysql文档
+
+### Pmorm目前支持的字段类型
+
+Pmorm|Mysql
+--|:--:
+PrimaryKeyField|无
+IntField|INT
+FloatField|FLOAT
+VarcharField|VARCHAR
+TextField|TEXT
+
+#### 其中 PrimaryKeyField 是每个模型必须定义的,也是Pmorm工作的前提,所以一个基本的Model定义看起来像这样
+
+```python
+mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
+class ModelName(Base):
+    class Meta:
+        db = mydb
+        table = 'mytable'
+    id = PrimaryKeyField()
+    # Other fields...
+    
 ```
