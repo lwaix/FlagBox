@@ -114,7 +114,7 @@ class Test(unittest.TestCase):
         cursor = db.cursor()
         # 如果无异常,说明表已经创建,sign为1,否则为0
         try:
-            cursor.execute('SELECT 1 FROM {} LIMIT 1'.format(User.Meta.table))
+            cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
             sign = 1
         except Exception:
             sign = 0
@@ -122,8 +122,8 @@ class Test(unittest.TestCase):
         cursor.close()
     
     def test_c_insert_one(self):
-        User1 = User(username='user1', password='passwd', salary=3000.0)
-        User1.insert()
+        user1 = User(username='user1', password='passwd', salary=3000.0)
+        user1.insert()
         cursor = db.cursor()
         cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
         id = cursor.fetchone()[0]
@@ -131,15 +131,21 @@ class Test(unittest.TestCase):
         cursor.close()
     
     def test_d_search(self):
-        User1 = User.search(User.salary==3000.0).first()
-        self.assertEqual(User1.username, 'user1')
+        user1 = User.search(User.salary==3000.0).first()
+        self.assertEqual(user1.id, 1)
+        self.assertEqual(user1.username, 'user1')
+        self.assertEqual(user1.password, 'passwd')
+        self.assertEqual(user1.salary, 3000.0)
     
     def test_e_update(self):
-        User1 = User.search(User.salary==3000).first()
-        User1.username = 'edit'
-        User1.update()
-        User1 = User.search(User.username=='edit').first()
-        self.assertEqual(User1.username, 'edit')
+        user1 = User.search(User.salary==3000).first()
+        user1.username = 'edit'
+        user1.update()
+        user1 = User.search(User.username=='edit').first()
+        self.assertEqual(user1.id, 1)
+        self.assertEqual(user1.username, 'edit')
+        self.assertEqual(user1.password, 'passwd')
+        self.assertEqual(user1.salary, 3000.0)
     
     def test_f_delete(self):
         User1 = User.search(User.id==1).first()

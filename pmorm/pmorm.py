@@ -1,3 +1,7 @@
+VERSION = '0.12'
+__author__ = 'lwaix'
+__email__ = '1494645263@qq.com'
+
 import pymysql
 
 """
@@ -88,14 +92,14 @@ class Result:
         cursor = db.cursor()
         cursor.execute(sentence)
         row = cursor.fetchone()        
-        if row:
+        if row is None:
+            obj = None
+        else:
             obj = model()
             index = 0
             while index < len(fieldnames):
                 obj.__setattr__(fieldnames[index], row[index])
                 index += 1
-        else:
-            obj = None
         cursor.close()
         db.commit()
         return obj
@@ -487,10 +491,10 @@ class Base:
                 raise TypeError('类型不匹配')
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
         cursor.execute(sentence)
-        # 标记该对象id
-        self.id = cursor.lastrowid
         cursor.close()
         db.commit()
+        # 标记该对象id
+        self.id = cursor.lastrowid
     
     # 如果对象已被插入则返回True
     def inserted(self):
@@ -542,6 +546,6 @@ class Base:
 
         sentence = 'DELETE FROM {} WHERE id={}'.format(table, self.id)
         cursor.execute(sentence)
-        self.id = None
         cursor.close()
         db.commit()
+        self.id = None
