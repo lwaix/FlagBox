@@ -88,12 +88,14 @@ class Result:
         cursor = db.cursor()
         cursor.execute(sentence)
         row = cursor.fetchone()        
-
-        obj = model()
-        index = 0
-        while index < len(fieldnames):
-            obj.__setattr__(fieldnames[index], row[index])
-            index += 1
+        if row:
+            obj = model()
+            index = 0
+            while index < len(fieldnames):
+                obj.__setattr__(fieldnames[index], row[index])
+                index += 1
+        else:
+            obj = None
         cursor.close()
         db.commit()
         return obj
