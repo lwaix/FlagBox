@@ -141,7 +141,7 @@ class Test(unittest.TestCase):
         User1 = User.search(User.username=='edit').first()
         self.assertEqual(User1.username, 'edit')
     
-    def test_f_delect(self):
+    def test_f_delete(self):
         User1 = User.search(User.id==1).first()
         User1.delete()
         cursor = db.cursor()

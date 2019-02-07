@@ -5,7 +5,9 @@
 ## Installing
 
 ```
-python3 .\setup.py install --user
+shell>git clone https://github.com/lwaix/Pmorm.git
+shell>cd .\Pmorm\
+shell>python3 .\setup.py install --user
 ```
 
 ## Usage
@@ -20,7 +22,7 @@ mysql>CREATE DATABASE testdb;
 
 ### Quick start
 
-#### Create a mysql database connection
+#### Create a mysql connection
 
 ```python
 from pmorm import Mysql
@@ -49,7 +51,7 @@ class User(Base):
 User.create_table()
 ```
 
-#### Inserting
+#### Insert
 
 ```python
 # A easy way
@@ -72,7 +74,7 @@ user3.insert()
 print(user1.inserted()) # True
 ```
 
-#### Search rows
+#### Search
 
 ```python
 # Get all and print them one by one
@@ -100,12 +102,12 @@ for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 ```
 
-##### Attention: search() return a "Result" object, you can get specific data by its methods all() and first()
+##### Attention: search() method returns a "Result" object, you can get specific data by its methods all() and first()
 
-#### Editing
+#### Edit
 
 ```python
-# Get one user first
+# Get one first
 user1 = User.search(
     ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # Complex queries
 ).first()
@@ -116,11 +118,16 @@ user1.update()
 print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 ```
 
-#### Deleting
+#### Delete
 
 ```python
+# Get one first
+user1 = User.search(User.username=='edit').first()
+# Delete it
 user1.delete()
 ```
+
+---
 
 ### About Mysql() function
 
@@ -131,7 +138,7 @@ def Mysql(*args, **kwargs):
     return pymysql.connect(*args, **kwargs)
 ```
 
-#### The Mysql() function is actually the encapsulation of the pymysql.connect() function, which has more parameters, see pymysql documentation
+#### The Mysql() is actually the encapsulation of the pymysql.connect() , which has more parameters, see pymysql documentation
 
 ### Currently supported MySQL fields
 

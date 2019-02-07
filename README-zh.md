@@ -3,7 +3,9 @@
 ## 安装
 
 ```
-python3 .\setup.py install --user
+shell>git clone https://github.com/lwaix/Pmorm.git
+shell>cd .\Pmorm\
+shell>python3 .\setup.py install --user
 ```
 
 ## 使用教程
@@ -15,7 +17,6 @@ python3 .\setup.py install --user
 ```
 mysql>CREATE DATABASE testdb;
 ```
-
 
 ### 快速开始
 
@@ -44,7 +45,7 @@ class User(Base):
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
 
-# 如果该表未被创建,则创建该表
+# 如果表未被创建,则创建该表
 User.create_table()
 ```
 
@@ -84,7 +85,7 @@ users = User.search(User.username != 'unkonw').all()
 for user in users:
     print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# 组合查询(利用|和&运算符)
+# 组合条件查询(利用|和&运算符)
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
@@ -129,7 +130,7 @@ user1.delete()
 
 ### 关于 Mysql() 函数
 
-#### Mysql() 函数实际代码
+#### Mysql() 函数代码
 
 ```python
 def Mysql(*args, **kwargs):
@@ -157,5 +158,5 @@ class ModelName(Base):
         db = mydb
         table = 'mytable'
     id = PrimaryKeyField()
-    # Other fields...
+    # 其他字段...
 ```
