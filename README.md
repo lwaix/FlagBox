@@ -1,3 +1,5 @@
+##### [中文文档-Chinese](https://github.com/lwaix/Pmorm/blob/master/README-zh.md "中文文档-Chinese")
+
 # pmorm.py - a simple mysql orm for python3
 
 ## Install pmorm

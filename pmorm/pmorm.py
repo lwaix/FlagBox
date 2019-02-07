@@ -503,40 +503,6 @@ class Base:
         cla._init()
         db = cla.Meta.db
         return Result(db, cla, query, orders)
-        # table = cla.Meta.table
-        # cursor = cla.Meta.db.cursor()
-        # fieldnames = cla._get_fields().keys()
-        
-        # fieldnames_str = ','.join(fieldnames)
-        # # 如果query为None则返回所有结果
-        # if query:
-        #     sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, table, query.condition)
-        # else:
-        #     sentence = 'SELECT {} FROM {}'.format(fieldnames_str, table)
-        # if orders:
-        #     o = []
-        #     for order in orders:
-        #         if isinstance(order, field_types):
-        #             o.append(order.fieldname)
-        #         if isinstance(order, str):
-        #             o.append(order)
-        #     sentence = "{} ORDER BY {}".format(sentence, ','.join(o))
-        # # 当查询结果为0时
-        # cursor.execute(sentence)
-        # rows = cursor.fetchall()
-        # res = []
-        # # 将查询结果封装为Model对象
-        # for one in rows:
-        #     one = list(one)
-        #     obj = cla()
-        #     index = 0
-        #     while index <= len(fieldnames)-1:
-        #         obj.__setattr__(list(fieldnames)[index], one[index])
-        #         index += 1
-        #     res.append(obj)
-        # cursor.close()
-        # db.commit()
-        # return Result(res)
     
     # 更新该对象
     def update(self):
