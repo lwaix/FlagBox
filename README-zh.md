@@ -158,5 +158,4 @@ class ModelName(Base):
         table = 'mytable'
     id = PrimaryKeyField()
     # Other fields...
-    
 ```
