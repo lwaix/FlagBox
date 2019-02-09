@@ -7,7 +7,7 @@ import pymysql
 """
 TODO:
     - 重构代码
-    - 英文注释
+    - 更多字段
 """
 
 # 返回一个pymysql.Connection对象
@@ -27,12 +27,12 @@ class Query:
     def __init__(self, condition):
         self.condition = '{}'.format(condition)
     
-    # &&运算符拼接两个Query对象
+    # &运算符拼接两个Query对象
     def __and__(self, obj):
         self.condition = '({})'.format(self.condition + ' AND ' + obj.condition)
         return self
 
-    # ||运算符拼接两个Query对象
+    # |运算符拼接两个Query对象
     def __or__(self, obj):
         self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
@@ -380,20 +380,21 @@ class Base:
     # 接收本对象的各个字段值,没有赋值的默认为None
     def __init__(self, **kwargs):
         self.__class__._init()
-        # 如果id为None说明该对象还未被插入
         fields = self.__class__._get_fields()
         fieldnames = fields.keys()
         keys = kwargs.keys()
+
+        # 检查是否给id赋值
         if 'id' in keys:
-            raise ValueError('id不能被手动赋值')
+            raise ValueError('不能赋值的字段:id')
         # 检查未知的参数
         for key in keys:
             if key not in fieldnames:
-                raise ValueError('未知的参数{}'.format(key))
+                raise ValueError('未知的参数:{}'.format(key))
         # 设置对象的值
-        for key in fields.keys():
-            self.__setattr__(key,kwargs.get(key, None))
-        # 对于某些定义的default的Model,会给它赋上default值
+        for fieldname in fieldnames:
+            self.__setattr__(fieldname,kwargs.get(fieldname, None))
+        # 定义了default的字段,会给它赋上默认值
         for field in fields.values():
             if isinstance(field, defaultable):
                 if field.default is not None and self.__getattribute__(field.fieldname) is None:
@@ -407,6 +408,7 @@ class Base:
             cla._fields = dict()
             id_sign = False
             for key,value in cla.__dict__.items():
+                # 检查是否定义了id字段
                 if (not id_sign) and (key == 'id' and isinstance(value, PrimaryKeyField)):
                     id_sign = True
                 # 如果类对象属于Fields,那么说明它就是被定义在Model中的字段,将它写入_fields
@@ -427,16 +429,15 @@ class Base:
     
     # 获取当前对象的数据
     def _get_current_data(self):
-        fields = self.__class__._get_fields()
-        res = {}
-        for fieldname in fields.keys():
+        fieldnames = self.__class__._get_fields().keys()
+        res = dict()
+        for fieldname in fieldnames:
             res[fieldname] = self.__getattribute__(fieldname)
         return res
 
     # 建表操作
     @classmethod
     def create_table(cla):
-        # 检查是否初始化
         cla._init()
         db = cla.Meta.db
         table = cla.Meta.table
@@ -474,21 +475,21 @@ class Base:
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
-        data = self._get_current_data()
+        current_data = self._get_current_data()
         fields = self.__class__._get_fields()
 
         fieldnames = []
         values = []
         # 类型检查
         for key,value in fields.items():
-            if value._check(data.get(key)):
+            if value._check(current_data.get(key)):
                 # id不需要插入,值为None的也不需要插入
-                if key == 'id' or data.get(key) is None:
+                if key == 'id' or current_data.get(key) is None:
                     continue
                 fieldnames.append(key)
-                values.append(value._value(((data.get(key)))))
+                values.append(value._value(((current_data.get(key)))))
             else:
-                raise TypeError('类型不匹配')
+                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(key), value.fieldname))
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
         cursor.execute(sentence)
         cursor.close()
@@ -503,7 +504,7 @@ class Base:
             return False
         return True
     
-    # 查询所有符合条件的结果,封装为Result对象并返回
+    # 返回Result对象
     @classmethod
     def search(cla, query=None, orders=None):
         cla._init()
@@ -526,7 +527,7 @@ class Base:
         for field in fields.values():
             value = current_data.get(field.fieldname)
             if not field._check(value):
-                raise TypeError('字段值类型不匹配')
+                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(field.fieldname), field.fieldname))
             sets.append('{}={}'.format(field.fieldname,field._value(value)))
         temp = ','.join(sets)
         sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
