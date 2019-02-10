@@ -10,19 +10,19 @@ TODO:
     - 更多字段
 """
 
-# 返回一个pymysql.Connection对象
+# 封装pymysql.Connect()函数
 def Mysql(*args, **kwargs):
     return pymysql.connect(*args, **kwargs)
 
-# 将值转安全转意,防止注入
+# 将字符串值转安全转意(返回值不包含''符号),防注入
 def safe(value):
-    # 仅仅转义str类型的值
+    # 仅转str
     if isinstance(value, str):
         return pymysql.escape_string(value)
     else:
         return value
 
-# 查询条件对象,用于拼接查询条件部分的语句(WHERE之后)
+# 查询条件对象,拼接查询条件部分(WHERE之后)的语句
 class Query:
     def __init__(self, condition):
         self.condition = '{}'.format(condition)
@@ -41,21 +41,21 @@ class Query:
 class Result:
     def __init__(self, db, model, query, orders):
         fieldnames = list(model._get_fields().keys())
-        fieldnames_str = ",".join(fieldnames)
+        fieldnames_str = ','.join(fieldnames)
         if query is None:
-            sentence = "SELECT {} FROM {}".format(fieldnames_str, model.Meta.table)
+            sentence = 'SELECT {} FROM {}'.format(fieldnames_str, model.Meta.table)
         else:
-            sentence = "SELECT {} FROM {} WHERE {}".format(fieldnames_str, model.Meta.table, query.condition)
+            sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, model.Meta.table, query.condition)
         if orders is not None:
-            orders_list = []
+            orders_list = list()
             for order in orders:
                 # 可以传过来的是类似Username之类的字段类型
                 if isinstance(order, field_types):
                     orders_list.append(order.fieldname)
                 # 可以传过来的是+,-处理过的str
-                if isinstance(order, str):
+                elif isinstance(order, str):
                     orders_list.append(order)
-            sentence = "{} ORDER BY {}".format(sentence, ','.join(orders_list))
+            sentence = '{} ORDER BY {}'.format(sentence, ','.join(orders_list))
         self.db = db
         self.model = model
         self.sentence = sentence
@@ -69,9 +69,9 @@ class Result:
 
         cursor = db.cursor()
         cursor.execute(sentence)
-        rows = cursor.fetchall()    
+        rows = cursor.fetchall()
 
-        objs = []
+        objs = list()
         for row in rows:
             obj = model()
             index = 0
@@ -86,12 +86,12 @@ class Result:
     def first(self):
         db = self.db
         model = self.model
-        sentence = "{} LIMIT 1".format(self.sentence)
+        sentence = '{} LIMIT 1'.format(self.sentence)
         fieldnames = self.fieldnames
 
         cursor = db.cursor()
         cursor.execute(sentence)
-        row = cursor.fetchone()        
+        row = cursor.fetchone()
         if row is None:
             obj = None
         else:
@@ -131,7 +131,7 @@ class TextField:
     # 每个字段都实现这个方法:获取这个字段值的表达方式比如INT:1,FLOAT:1.0,而TEXT,VARCHAR:'1',并将值安全转义
     def _value(self, value):
         if value is not None:
-            return "'{}'".format(safe(value))
+            return '"{}"'.format(safe(value))
         else:
             return 'NULL'
 
@@ -167,7 +167,7 @@ class VarcharField:
     def _make_element(self):
         sentence = '{} VARCHAR({})'.format(self.fieldname, self.max_length)
         if self.default is not None:
-            sentence += " DEFAULT '{}'".format(safe(self.default))
+            sentence += ' DEFAULT "{}"'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -181,7 +181,7 @@ class VarcharField:
     
     def _value(self, value):
         if value is not None:
-            return "'{}'".format(safe(value))
+            return '"{}"'.format(safe(value))
         else:
             return 'NULL'
     
@@ -212,7 +212,7 @@ class IntField:
     def _make_element(self):
         sentence = '{} INT'.format(self.fieldname)
         if self.default is not None:
-            sentence += " DEFAULT {}".format(safe(self.default))
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -226,7 +226,7 @@ class IntField:
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(safe(value))
+            return '{}'.format(safe(value))
         else:
             return 'NULL'
 
@@ -269,7 +269,7 @@ class FloatField:
     def _make_element(self):
         sentence = '{} FLOAT'.format(self.fieldname)
         if self.default is not None:
-            sentence += " DEFAULT {}".format(safe(self.default))
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -284,7 +284,7 @@ class FloatField:
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(safe(value))
+            return '{}'.format(safe(value))
         else:
             return 'NULL'
     
@@ -328,7 +328,7 @@ class PrimaryKeyField():
     
     def _value(self, value):
         if value is not None:
-            return "{}".format(safe(value))
+            return '{}'.format(safe(value))
         else:
             return 'NULL'
     
@@ -418,7 +418,7 @@ class Base:
                     value.fieldname = key
                     cla._fields[key] = value
             if not id_sign:
-                raise AttributeError('该模型未定义id字段')
+                raise AttributeError('未定义的字段:id')
             # 标记已经初始化
             cla._init_sign = True
 
@@ -444,7 +444,7 @@ class Base:
         cursor = db.cursor()
         fields = cla._get_fields()
 
-        field_elements = []
+        field_elements = list()
         for value in fields.values():
             field_elements.append(value._make_element())
         
@@ -470,7 +470,7 @@ class Base:
     def insert(self):
         # 被插入过的对象无法被重复插入
         if self.inserted():
-            raise RuntimeError("该对象已被插入,不可重复插入")
+            raise RuntimeError('该对象已被插入,不可重复插入')
         self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
@@ -478,8 +478,8 @@ class Base:
         current_data = self._get_current_data()
         fields = self.__class__._get_fields()
 
-        fieldnames = []
-        values = []
+        fieldnames = list()
+        values = list()
         # 类型检查
         for key,value in fields.items():
             if value._check(current_data.get(key)):
@@ -523,7 +523,7 @@ class Base:
         fields = self.__class__._get_fields()
         current_data = self._get_current_data()
 
-        sets = []
+        sets = list()
         for field in fields.values():
             value = current_data.get(field.fieldname)
             if not field._check(value):

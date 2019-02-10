@@ -27,14 +27,14 @@ class Test(unittest.TestCase):
         i4.fieldname = 'i4'
         i5 = pmorm.IntField(nullable=False, unique=True, default=32)
         i5.fieldname = 'i5'
-        self.assertEqual(i1._make_element(), "i1 INT")
+        self.assertEqual(i1._make_element(), 'i1 INT')
         self.assertEqual(i2._make_element(), 'i2 INT UNIQUE')
         self.assertEqual(i3._make_element(), 'i3 INT NOT NULL')
         self.assertEqual(i4._make_element(), 'i4 INT NOT NULL UNIQUE')
-        self.assertEqual(i5._make_element(), "i5 INT DEFAULT 32 NOT NULL UNIQUE")
+        self.assertEqual(i5._make_element(), 'i5 INT DEFAULT 32 NOT NULL UNIQUE')
         self.assertEqual(i1._check(None), True)
         self.assertEqual(i1._check(32), True)
-        self.assertEqual(i3._check("1"), False)
+        self.assertEqual(i3._check('1'), False)
         self.assertEqual(i3._check(None), False)
         self.assertEqual(i3._check(32), True)
         self.assertEqual(i1._value(32), '32')
@@ -52,15 +52,15 @@ class Test(unittest.TestCase):
         f5.fieldname = 'f5'
         f6 = pmorm.FloatField(nullable=False, unique=True, default=32.1)
         f6.fieldname = 'f6'
-        self.assertEqual(f1._make_element(), "f1 FLOAT")
+        self.assertEqual(f1._make_element(), 'f1 FLOAT')
         self.assertEqual(f2._make_element(), 'f2 FLOAT UNIQUE')
         self.assertEqual(f3._make_element(), 'f3 FLOAT NOT NULL')
         self.assertEqual(f4._make_element(), 'f4 FLOAT NOT NULL UNIQUE')
-        self.assertEqual(f5._make_element(), "f5 FLOAT DEFAULT 32 NOT NULL UNIQUE")
-        self.assertEqual(f6._make_element(), "f6 FLOAT DEFAULT 32.1 NOT NULL UNIQUE")
+        self.assertEqual(f5._make_element(), 'f5 FLOAT DEFAULT 32 NOT NULL UNIQUE')
+        self.assertEqual(f6._make_element(), 'f6 FLOAT DEFAULT 32.1 NOT NULL UNIQUE')
         self.assertEqual(f1._check(None), True)
         self.assertEqual(f1._check(32), True)
-        self.assertEqual(f3._check("1"), False)
+        self.assertEqual(f3._check('1'), False)
         self.assertEqual(f3._check(None), False)
         self.assertEqual(f3._check(32), True)
         self.assertEqual(f3._check(32.1), True)
@@ -78,16 +78,16 @@ class Test(unittest.TestCase):
         v4.fieldname = 'v4'
         v5 = pmorm.VarcharField(max_length=4096, nullable=False, unique=True, default='"I am oj8k"')
         v5.fieldname = 'v5'
-        self.assertEqual(v1._make_element(), "v1 VARCHAR(256)")
+        self.assertEqual(v1._make_element(), 'v1 VARCHAR(256)')
         self.assertEqual(v2._make_element(), 'v2 VARCHAR(512) UNIQUE')
         self.assertEqual(v3._make_element(), 'v3 VARCHAR(1024) NOT NULL')
         self.assertEqual(v4._make_element(), 'v4 VARCHAR(2048) NOT NULL UNIQUE')
-        self.assertEqual(v5._make_element(), "v5 VARCHAR(4096) DEFAULT '{}' NOT NULL UNIQUE".format('\\"I am oj8k\\"'))
+        self.assertEqual(v5._make_element(), 'v5 VARCHAR(4096) DEFAULT "{}" NOT NULL UNIQUE'.format('\\"I am oj8k\\"'))
         self.assertEqual(v1._check(None), True)
         self.assertEqual(v1._check('DEMO'), True)
         self.assertEqual(v3._check(1), False)
         self.assertEqual(v3._check(None), False)
-        self.assertEqual(v1._value('"I am oj8k"'), '\'\\"I am oj8k\\"\'')
+        self.assertEqual(v1._value('"I am oj8k"'), '"\\"I am oj8k\\""')
         self.assertEqual(v1._value(None), 'NULL')
 
         t1 = pmorm.TextField(nullable=True, unique=False)
@@ -98,7 +98,7 @@ class Test(unittest.TestCase):
         t3.fieldname = 't3'
         t4 = pmorm.TextField(nullable=False, unique=True)
         t4.fieldname = 't4'
-        self.assertEqual(t1._make_element(), "t1 TEXT")
+        self.assertEqual(t1._make_element(), 't1 TEXT')
         self.assertEqual(t2._make_element(), 't2 TEXT UNIQUE')
         self.assertEqual(t3._make_element(), 't3 TEXT NOT NULL')
         self.assertEqual(t4._make_element(), 't4 TEXT NOT NULL UNIQUE')
@@ -106,7 +106,7 @@ class Test(unittest.TestCase):
         self.assertEqual(t1._check('DEMO'), True)
         self.assertEqual(t3._check(None), False)
         self.assertEqual(t3._check('DEMO'), True)
-        self.assertEqual(t1._value('"I am oj8k"'), '\'\\"I am oj8k\\"\'')
+        self.assertEqual(t1._value('"I am oj8k"'), '"\\"I am oj8k\\""')
         self.assertEqual(t1._value(None), 'NULL')
 
     def test_b_create_table(self):
