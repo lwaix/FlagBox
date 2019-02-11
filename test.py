@@ -7,7 +7,7 @@ class User(pmorm.Base):
     class Meta:
         db = db
         table = 'user'
-    
+
     id = pmorm.PrimaryKeyField()
     username = pmorm.VarcharField(32, False, True)
     password = pmorm.VarcharField(64, False, False)
@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
             sign = 0
         self.assertEqual(sign, 1)
         cursor.close()
-    
+
     def test_c_insert_one(self):
         user1 = User(username='user1', password='passwd', salary=3000.0)
         user1.insert()
@@ -129,14 +129,14 @@ class Test(unittest.TestCase):
         id = cursor.fetchone()[0]
         self.assertEqual(id, 1)
         cursor.close()
-    
+
     def test_d_search(self):
         user1 = User.search(User.salary==3000.0).first()
         self.assertEqual(user1.id, 1)
         self.assertEqual(user1.username, 'user1')
         self.assertEqual(user1.password, 'passwd')
         self.assertEqual(user1.salary, 3000.0)
-    
+
     def test_e_update(self):
         user1 = User.search(User.salary==3000).first()
         user1.username = 'edit'
@@ -146,14 +146,14 @@ class Test(unittest.TestCase):
         self.assertEqual(user1.username, 'edit')
         self.assertEqual(user1.password, 'passwd')
         self.assertEqual(user1.salary, 3000.0)
-    
+
     def test_f_delete(self):
         User1 = User.search(User.id==1).first()
         User1.delete()
         cursor = db.cursor()
         num = cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
         self.assertEqual(num, 0)
-    
+
     def test_g_drop_table(self):
         User.drop_table()
         try:
@@ -161,7 +161,7 @@ class Test(unittest.TestCase):
             sign = 0
         except:
             sign = 1
-        self.assertEqual(sign, 1)
+        self.assertEqual(sign, 1)  
 
 if __name__ == '__main__':
     unittest.main()

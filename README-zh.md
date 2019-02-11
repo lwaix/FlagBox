@@ -128,6 +128,8 @@ user1.delete()
 
 ---
 
+## 其他
+
 ### 关于 Mysql() 函数
 
 #### Mysql() 函数代码
@@ -137,7 +139,7 @@ def Mysql(*args, **kwargs):
     return pymysql.connect(*args, **kwargs)
 ```
 
-#### Mysql() 函数实际是 pymysql.connect() 函数的封装,它的更多的参数,请参见pymysql文档
+#### Mysql() 函数实际是 pymysql.connect() 函数的封装,更多信息,参见pymysql文档
 
 ### 目前支持的字段类型
 
@@ -145,7 +147,9 @@ Pmorm|Mysql
 --|:--:
 PrimaryKeyField|无
 IntField|INT
+BigIntField|BIGINT
 FloatField|FLOAT
+DoubleField|DOUBLE
 VarcharField|VARCHAR
 TextField|TEXT
 

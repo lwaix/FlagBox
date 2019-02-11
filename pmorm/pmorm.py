@@ -1,4 +1,4 @@
-VERSION = '0.12'
+VERSION = '0.13'
 __author__ = 'lwaix'
 __email__ = '1494645263@qq.com'
 
@@ -26,7 +26,7 @@ def safe(value):
 class Query:
     def __init__(self, condition):
         self.condition = '{}'.format(condition)
-    
+
     # &运算符拼接两个Query对象
     def __and__(self, obj):
         self.condition = '({})'.format(self.condition + ' AND ' + obj.condition)
@@ -60,7 +60,7 @@ class Result:
         self.model = model
         self.sentence = sentence
         self.fieldnames = fieldnames
-    
+
     def all(self):
         db = self.db
         model = self.model
@@ -82,7 +82,7 @@ class Result:
         cursor.close()
         db.commit()
         return objs
-    
+
     def first(self):
         db = self.db
         model = self.model
@@ -127,7 +127,7 @@ class TextField:
         if isinstance(value, str) or (value is None and self.nullable):
             return True
         return False
-    
+
     # 每个字段都实现这个方法:获取这个字段值的表达方式比如INT:1,FLOAT:1.0,而TEXT,VARCHAR:'1',并将值安全转义
     def _value(self, value):
         if value is not None:
@@ -157,7 +157,7 @@ class TextField:
 
 # 对于Mysql字段VARCHAR
 class VarcharField:
-    def __init__(self, max_length=256, nullable=True, unique=False, default=None):
+    def __init__(self, max_length=255, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.max_length = max_length
         self.nullable = nullable
@@ -178,23 +178,23 @@ class VarcharField:
         if isinstance(value, str) or (value is None and self.nullable):
             return True
         return False
-    
+
     def _value(self, value):
         if value is not None:
             return '"{}"'.format(safe(value))
         else:
             return 'NULL'
-    
+
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
-    
+
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
-    
+
     def __pos__(self):
         return '{}'.format(self.fieldname)
 
@@ -218,12 +218,12 @@ class IntField:
         if self.unique:
             sentence += ' UNIQUE'
         return sentence
-    
+
     def _check(self, value):
         if isinstance(value, int) or (value is None and self.nullable):
             return True
         return False
-    
+
     def _value(self, value):
         if value is not None:
             return '{}'.format(safe(value))
@@ -234,18 +234,75 @@ class IntField:
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
-    
+
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
-    
+
     def __gt__(self, value):
         return Query('{}>{}'.format(self.fieldname, self._value(value)))
-    
+
     def __lt__(self, value):
         return Query('{}<{}'.format(self.fieldname, self._value(value)))
-    
+
+    def __ge__(self, value):
+        return Query('{}>={}'.format(self.fieldname, self._value(value)))
+
+    def __le__(self, value):
+        return Query('{}<={}'.format(self.fieldname, self._value(value)))
+
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
+
+# 对应Mysql字段INT
+class BigIntField:
+    def __init__(self, nullable=True, unique=False, default=None):
+        self.fieldname = None
+        self.nullable = nullable
+        self.unique = unique
+        self.default = default
+
+    def _make_element(self):
+        sentence = '{} BIGINT'.format(self.fieldname)
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
+        if not self.nullable:
+            sentence += ' NOT NULL'
+        if self.unique:
+            sentence += ' UNIQUE'
+        return sentence
+
+    def _check(self, value):
+        if isinstance(value, int) or (value is None and self.nullable):
+            return True
+        return False
+
+    def _value(self, value):
+        if value is not None:
+            return '{}'.format(safe(value))
+        else:
+            return 'NULL'
+
+    def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
+
+    def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
+
+    def __gt__(self, value):
+        return Query('{}>{}'.format(self.fieldname, self._value(value)))
+
+    def __lt__(self, value):
+        return Query('{}<{}'.format(self.fieldname, self._value(value)))
+
     def __ge__(self, value):
         return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
@@ -275,35 +332,93 @@ class FloatField:
         if self.unique:
             sentence += ' UNIQUE'
         return sentence
-    
+
     def _check(self, value):
-        # FLOAT同样支持INT
+        # FLOAT同样支持int值
         if isinstance(value, (float, int)) or (value is None and self.nullable):
             return True
         return False
-    
+
     def _value(self, value):
         if value is not None:
             return '{}'.format(safe(value))
         else:
             return 'NULL'
-    
+
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
-    
+
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
-    
+
     def __gt__(self, value):
         return Query('{}>{}'.format(self.fieldname, self._value(value)))
-    
+
     def __lt__(self, value):
         return Query('{}<{}'.format(self.fieldname, self._value(value)))
-    
+
+    def __ge__(self, value):
+        return Query('{}>={}'.format(self.fieldname, self._value(value)))
+
+    def __le__(self, value):
+        return Query('{}<={}'.format(self.fieldname, self._value(value)))
+
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
+
+# 对应Mysql字段DOUBLE
+class DoubleField:
+    def __init__(self, nullable=True, unique=False, default=None):
+        self.fieldname = None
+        self.nullable = nullable
+        self.unique = unique
+        self.default = default
+
+    def _make_element(self):
+        sentence = '{} DOUBLE'.format(self.fieldname)
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
+        if not self.nullable:
+            sentence += ' NOT NULL'
+        if self.unique:
+            sentence += ' UNIQUE'
+        return sentence
+
+    def _check(self, value):
+        # DOUBLE同样支持int值
+        if isinstance(value, (float, int)) or (value is None and self.nullable):
+            return True
+        return False
+
+    def _value(self, value):
+        if value is not None:
+            return '{}'.format(safe(value))
+        else:
+            return 'NULL'
+
+    def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
+
+    def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
+
+    def __gt__(self, value):
+        return Query('{}>{}'.format(self.fieldname, self._value(value)))
+
+    def __lt__(self, value):
+        return Query('{}<{}'.format(self.fieldname, self._value(value)))
+
     def __ge__(self, value):
         return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
@@ -320,37 +435,37 @@ class FloatField:
 class PrimaryKeyField():
     def __init__(self):
         self.fieldname = 'id'
-    
+
     def _check(self, value):
         if isinstance(value, int) or value is None:
             return True
         return False
-    
+
     def _value(self, value):
         if value is not None:
             return '{}'.format(safe(value))
         else:
             return 'NULL'
-    
+
     def _make_element(self):
         return '{} INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
-    
+
     def __eq__(self, value):
         if value is None:
             return Query('{} IS NULL'.format(self.fieldname))
         return Query('{}={}'.format(self.fieldname, self._value(value)))
-    
+
     def __ne__(self, value):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
-    
+
     def __gt__(self, value):
         return Query('{}>{}'.format(self.fieldname, self._value(value)))
-    
+
     def __lt__(self, value):
         return Query('{}<{}'.format(self.fieldname, self._value(value)))
-    
+
     def __ge__(self, value):
         return Query('{}>={}'.format(self.fieldname, self._value(value)))
 
@@ -362,10 +477,9 @@ class PrimaryKeyField():
 
     def __neg__(self):
         return '{} DESC'.format(self.fieldname)
-        
 
-field_types = (TextField, VarcharField, IntField, FloatField, PrimaryKeyField)
-defaultable = (VarcharField, IntField, FloatField)
+field_types = (TextField, VarcharField, IntField, BigIntField ,FloatField, DoubleField, PrimaryKeyField)
+defaultable = (VarcharField, IntField, BigIntField, FloatField, DoubleField)
 # ============
 
 class Base:
@@ -426,7 +540,7 @@ class Base:
     @classmethod
     def _get_fields(cla):
         return cla._fields
-    
+
     # 获取当前对象的数据
     def _get_current_data(self):
         fieldnames = self.__class__._get_fields().keys()
@@ -447,12 +561,12 @@ class Base:
         field_elements = list()
         for value in fields.values():
             field_elements.append(value._make_element())
-        
+
         sentence = 'CREATE TABLE IF NOT EXISTS {} ({})'.format(table, ','.join(field_elements))
         cursor.execute(sentence)
         cursor.close()
         db.commit()
-    
+
     # 删表操作
     @classmethod
     def drop_table(cla):
@@ -465,7 +579,7 @@ class Base:
         cursor.execute(sentence)
         cursor.close()
         db.commit()
-    
+
     # 插入操作
     def insert(self):
         # 被插入过的对象无法被重复插入
@@ -496,21 +610,21 @@ class Base:
         db.commit()
         # 标记该对象id
         self.id = cursor.lastrowid
-    
+
     # 如果对象已被插入则返回True
     def inserted(self):
         # 检查id是否通过检查 检查id是否为None
         if self.__class__._get_fields().get('id')._check(self.id) and self.id == None:
             return False
         return True
-    
+
     # 返回Result对象
     @classmethod
     def search(cla, query=None, orders=None):
         cla._init()
         db = cla.Meta.db
         return Result(db, cla, query, orders)
-    
+
     # 更新该对象
     def update(self):
         # 没有被插入的对象无法更新
@@ -530,11 +644,11 @@ class Base:
                 raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(field.fieldname), field.fieldname))
             sets.append('{}={}'.format(field.fieldname,field._value(value)))
         temp = ','.join(sets)
-        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, str(self.id))
+        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, self.id)
         cursor.execute(sentence)
         cursor.close()
         db.commit()
-    
+
     # 删除该对象
     def delete(self):
         # 没被插入的无法被删除

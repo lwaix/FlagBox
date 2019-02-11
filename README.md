@@ -129,6 +129,8 @@ user1.delete()
 
 ---
 
+## Else
+
 ### About Mysql() function
 
 #### The code of Mysql() function
@@ -138,7 +140,7 @@ def Mysql(*args, **kwargs):
     return pymysql.connect(*args, **kwargs)
 ```
 
-#### The Mysql() is actually the encapsulation of the pymysql.connect() , which has more parameters, see pymysql documentation
+#### The Mysql() is actually the encapsulation of the pymysql.connect() , which has more information, see pymysql documentation
 
 ### Currently supported MySQL fields
 
@@ -146,7 +148,9 @@ Pmorm|Mysql
 --|:--:
 PrimaryKeyField|NO
 IntField|INT
+BigIntField|BIGINT
 FloatField|FLOAT
+DoubleField|DOUBLE
 VarcharField|VARCHAR
 TextField|TEXT
 
