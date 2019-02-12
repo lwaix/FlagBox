@@ -1,6 +1,6 @@
 import pymysql
 
-VERSION = '0.13'
+VERSION = '0.14'
 __author__ = 'lwaix'
 __email__ = '1494645263@qq.com'
 
@@ -8,6 +8,7 @@ __email__ = '1494645263@qq.com'
 TODO:
     - 重构代码
     - 更多字段
+    - 完善单测
 """
 
 # 封装pymysql.Connect()函数
@@ -76,16 +77,12 @@ class Result:
             index = 0
             while index < len(fields):
                 field = fields[index]
+                row_value = row[index]
                 # 如果Boolean类型,将int类型转成bool型
-                if isinstance(field, BooleanField):
-                    row_value = row[index]
-                    # 防止把None转成False
-                    if row_value is None:
-                        obj.__setattr__(field.fieldname, None)
-                    else:
-                        obj.__setattr__(field.fieldname, bool(row[index]))
+                if isinstance(field, BooleanField) and row_value is not None:
+                        obj.__setattr__(field.fieldname, bool(row_value))
                 else:
-                    obj.__setattr__(field.fieldname, row[index])
+                    obj.__setattr__(field.fieldname, row_value)
                 index += 1
             objs.append(obj)
         cursor.close()
@@ -108,16 +105,12 @@ class Result:
             index = 0
             while index < len(fields):
                 field = fields[index]
+                row_value = row[index]
                 # 如果Boolean类型,将int类型转成bool型
-                if isinstance(field, BooleanField):
-                    # 防止把None转成False
-                    row_value = row[index]
-                    if row_value is None:
-                        obj.__setattr__(field.fieldname, None)
-                    else:
-                        obj.__setattr__(field.fieldname, bool(row[index]))
+                if isinstance(field, BooleanField) and row_value is not None:
+                    obj.__setattr__(field.fieldname, bool(row_value))
                 else:
-                    obj.__setattr__(field.fieldname, row[index])
+                    obj.__setattr__(field.fieldname, row_value)
                 index += 1
         cursor.close()
         db.commit()
@@ -562,30 +555,7 @@ class Base:
     # 在每个操作里面都检查是否init,仅仅执行一次_init()方法
     _init_sign = False
 
-    # 接收本对象的各个字段值,没有赋值的默认为None
-    def __init__(self, **kwargs):
-        self.__class__._init()
-        fields = self.__class__._get_fields()
-        fieldnames = fields.keys()
-        keys = kwargs.keys()
-
-        # 检查是否给id赋值
-        if 'id' in keys:
-            raise ValueError('不能赋值的字段:id')
-        # 检查未知的参数
-        for key in keys:
-            if key not in fieldnames:
-                raise ValueError('未知的参数:{}'.format(key))
-        # 设置对象的值
-        for fieldname in fieldnames:
-            self.__setattr__(fieldname,kwargs.get(fieldname, None))
-        # 定义了default的字段,会给它赋上默认值
-        for field in fields.values():
-            if isinstance(field, DefaultAbleField):
-                if field.default is not None and self.__getattribute__(field.fieldname) is None:
-                    self.__setattr__(field.fieldname,field.default)
-
-    # 初始化该Model,将字段名写入_fields,将字段名写入对应字段对象,并标记已初始化,只初始化一次
+        # 初始化该Model,将字段名写入_fields,将字段名写入对应字段对象,并标记已初始化,只初始化一次
     @classmethod
     def _init(cla):
         # 检查是否已初始化
@@ -619,6 +589,36 @@ class Base:
         for fieldname in fieldnames:
             res[fieldname] = self.__getattribute__(fieldname)
         return res
+    
+    # 如果对象已被插入则返回True
+    def inserted(self):
+        # 检查id是否通过检查 检查id是否为None
+        if self.__class__._get_fields().get('id')._check(self.id) and self.id is None:
+            return False
+        return True
+
+    # 接收本对象的各个字段值,没有赋值的默认为None
+    def __init__(self, **kwargs):
+        self.__class__._init()
+        fields = self.__class__._get_fields()
+        fieldnames = fields.keys()
+        keys = kwargs.keys()
+
+        # 检查是否给id赋值
+        if 'id' in keys:
+            raise ValueError('不可赋值字段:id')
+        # 检查未知的参数
+        for key in keys:
+            if key not in fieldnames:
+                raise ValueError('未知的参数:{}'.format(key))
+        # 设置对象的值
+        for fieldname in fieldnames:
+            self.__setattr__(fieldname,kwargs.get(fieldname, None))
+        # 定义了default的字段,会给它赋上默认值
+        for field in fields.values():
+            if isinstance(field, DefaultAbleField):
+                if field.default is not None and self.__getattribute__(field.fieldname) is None:
+                    self.__setattr__(field.fieldname,field.default)
 
     # 建表操作
     @classmethod
@@ -627,10 +627,10 @@ class Base:
         db = cla.Meta.db
         table = cla.Meta.table
         cursor = db.cursor()
-        fields = cla._get_fields()
+        fields = cla._get_fields().values()
 
         field_elements = list()
-        for value in fields.values():
+        for value in fields:
             field_elements.append(value._make_element())
 
         sentence = 'CREATE TABLE IF NOT EXISTS {} ({})'.format(table, ','.join(field_elements))
@@ -653,28 +653,29 @@ class Base:
 
     # 插入操作
     def insert(self):
+        self.__class__._init()
         # 被插入过的对象无法被重复插入
         if self.inserted():
             raise RuntimeError('该对象已被插入,不可重复插入')
-        self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
         current_data = self._get_current_data()
-        fields = self.__class__._get_fields()
+        fields = self.__class__._get_fields().values()
 
         fieldnames = list()
         values = list()
         # 类型检查
-        for key,value in fields.items():
-            if value._check(current_data.get(key)):
+        for field in fields:
+            fieldname = field.fieldname
+            if field._check(current_data.get(fieldname)):
                 # id不需要插入,值为None的也不需要插入
-                if key == 'id' or current_data.get(key) is None:
+                if fieldname == 'id' or current_data.get(fieldname) is None:
                     continue
-                fieldnames.append(key)
-                values.append(value._value(((current_data.get(key)))))
+                fieldnames.append(fieldname)
+                values.append(field._value(((current_data.get(fieldname)))))
             else:
-                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(key), value.fieldname))
+                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), field.fieldname))
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
         cursor.execute(sentence)
         cursor.close()
@@ -682,50 +683,44 @@ class Base:
         # 标记该对象id
         self.id = cursor.lastrowid
 
-    # 如果对象已被插入则返回True
-    def inserted(self):
-        # 检查id是否通过检查 检查id是否为None
-        if self.__class__._get_fields().get('id')._check(self.id) and self.id is None:
-            return False
-        return True
-
     # 返回Result对象
     @classmethod
     def search(cla, query=None, orders=None):
         cla._init()
         db = cla.Meta.db
+        # cla用于封装模型,query是查询条件,orders用于排序
         return Result(db, cla, query, orders)
 
     # 更新该对象
     def update(self):
+        self.__class__._init()
         # 没有被插入的对象无法更新
         if not self.inserted():
             raise RuntimeError('该对象不可更新')
-        self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
-        fields = self.__class__._get_fields()
+        fields = self.__class__._get_fields().values()
         current_data = self._get_current_data()
 
-        sets = list()
-        for field in fields.values():
-            value = current_data.get(field.fieldname)
+        elements = list()
+        for field in fields:
+            fieldname = field.fieldname
+            value = current_data.get(fieldname)
             if not field._check(value):
-                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(field.fieldname), field.fieldname))
-            sets.append('{}={}'.format(field.fieldname,field._value(value)))
-        temp = ','.join(sets)
-        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, temp, self.id)
+                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), fieldname))
+            elements.append('{}={}'.format(field.fieldname,field._value(value)))
+        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, ','.join(elements), self.id)
         cursor.execute(sentence)
         cursor.close()
         db.commit()
 
     # 删除该对象
     def delete(self):
+        self.__class__._init()
         # 没被插入的无法被删除
         if not self.inserted():
             raise RuntimeError('该对象不可删除')
-        self.__class__._init()
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()

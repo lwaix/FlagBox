@@ -1,11 +1,11 @@
 from setuptools import setup
-from pmorm import VERSION, __author__, __email__
+from pmorm import VERSION
 
 setup(
     name='Pmorm',
     version=VERSION,
-    author=__email__,
-    author_email=__email__,
+    author='lwaix',
+    author_email='1494645263@qq.com',
     packages=['pmorm'],
     install_requires=[
         'PyMySQL'
