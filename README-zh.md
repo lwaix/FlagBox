@@ -10,9 +10,7 @@
 ## 安装
 
 ```
-shell>git clone https://github.com/lwaix/Pmorm.git
-shell>cd .\Pmorm\
-shell>python3 .\setup.py install --user
+shell>pip install Pmorm
 ```
 
 ## 使用教程

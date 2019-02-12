@@ -6,6 +6,8 @@ setup(
     version=VERSION,
     author='lwaix',
     author_email='1494645263@qq.com',
+    description='A simple mysql orm for python3',
+    url='https://github.com/lwaix/Pmorm',
     packages=['pmorm'],
     install_requires=[
         'PyMySQL'
