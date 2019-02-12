@@ -1,1 +1,1 @@
-from .pmorm import Mysql, Base, PrimaryKeyField, IntField, BigIntField, FloatField, DoubleField, VarcharField, TextField, VERSION, __author__, __email__
+from .pmorm import Mysql, Base, PrimaryKeyField, BooleanField, IntField, BigIntField, FloatField, DoubleField, VarcharField, TextField, VERSION, __author__, __email__

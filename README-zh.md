@@ -1,4 +1,5 @@
 # pmorm.py - 简约的Python3 Mysql ORM
+
 #### 功能概述
 
 - 面向模型操作
@@ -152,6 +153,7 @@ def Mysql(*args, **kwargs):
 Pmorm|Mysql
 --|:--:
 PrimaryKeyField|无
+BooleanField|BOOLEAN
 IntField|INT
 BigIntField|BIGINT
 FloatField|FLOAT

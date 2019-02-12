@@ -40,8 +40,7 @@ class Query:
 # 封装查询结果
 class Result:
     def __init__(self, db, model, query, orders):
-        fieldnames = list(model._get_fields().keys())
-        fieldnames_str = ','.join(fieldnames)
+        fieldnames_str = ','.join(list(model._get_fields().keys()))
         if query is None:
             sentence = 'SELECT {} FROM {}'.format(fieldnames_str, model.Meta.table)
         else:
@@ -59,13 +58,13 @@ class Result:
         self.db = db
         self.model = model
         self.sentence = sentence
-        self.fieldnames = fieldnames
+        self.fields = list(model._get_fields().values())
 
     def all(self):
         db = self.db
         model = self.model
         sentence = self.sentence
-        fieldnames = self.fieldnames
+        fields = self.fields
 
         cursor = db.cursor()
         cursor.execute(sentence)
@@ -75,8 +74,18 @@ class Result:
         for row in rows:
             obj = model()
             index = 0
-            while index < len(fieldnames):
-                obj.__setattr__(fieldnames[index], row[index])
+            while index < len(fields):
+                field = fields[index]
+                # 如果Boolean类型,将int类型转成bool型
+                if isinstance(field, BooleanField):
+                    row_value = row[index]
+                    # 防止把None转成False
+                    if row_value is None:
+                        obj.__setattr__(field.fieldname, None)
+                    else:
+                        obj.__setattr__(field.fieldname, bool(row[index]))
+                else:
+                    obj.__setattr__(field.fieldname, row[index])
                 index += 1
             objs.append(obj)
         cursor.close()
@@ -87,7 +96,7 @@ class Result:
         db = self.db
         model = self.model
         sentence = '{} LIMIT 1'.format(self.sentence)
-        fieldnames = self.fieldnames
+        fields = self.fields
 
         cursor = db.cursor()
         cursor.execute(sentence)
@@ -97,8 +106,18 @@ class Result:
         else:
             obj = model()
             index = 0
-            while index < len(fieldnames):
-                obj.__setattr__(fieldnames[index], row[index])
+            while index < len(fields):
+                field = fields[index]
+                # 如果Boolean类型,将int类型转成bool型
+                if isinstance(field, BooleanField):
+                    # 防止把None转成False
+                    row_value = row[index]
+                    if row_value is None:
+                        obj.__setattr__(field.fieldname, None)
+                    else:
+                        obj.__setattr__(field.fieldname, bool(row[index]))
+                else:
+                    obj.__setattr__(field.fieldname, row[index])
                 index += 1
         cursor.close()
         db.commit()
@@ -113,6 +132,52 @@ class DefaultAbleField(Field):
 
 class UnDefaultAbleField(Field):
     pass
+
+# 对应Mysql字段VARCHAR
+class VarcharField(DefaultAbleField):
+    def __init__(self, max_length=255, nullable=True, unique=False, default=None):
+        self.fieldname = None
+        self.max_length = max_length
+        self.nullable = nullable
+        self.unique = unique
+        self.default = default
+
+    def _make_element(self):
+        sentence = '{} VARCHAR({})'.format(self.fieldname, self.max_length)
+        if self.default is not None:
+            sentence += ' DEFAULT "{}"'.format(safe(self.default))
+        if not self.nullable:
+            sentence += ' NOT NULL'
+        if self.unique:
+            sentence += ' UNIQUE'
+        return sentence
+
+    def _check(self, value):
+        if isinstance(value, str) or (value is None and self.nullable):
+            return True
+        return False
+
+    def _value(self, value):
+        if value is not None:
+            return '"{}"'.format(safe(value))
+        else:
+            return 'NULL'
+
+    def __eq__(self, value):
+        if value is None:
+            return Query('{} IS NULL'.format(self.fieldname))
+        return Query('{}={}'.format(self.fieldname, self._value(value)))
+
+    def __ne__(self, value):
+        if value is None:
+            return Query('{} IS NOT NULL'.format(self.fieldname))
+        return Query('{}!={}'.format(self.fieldname, self._value(value)))
+
+    def __pos__(self):
+        return '{}'.format(self.fieldname)
+
+    def __neg__(self):
+        return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql的TEXT字段
 class TextField(UnDefaultAbleField):
@@ -164,19 +229,18 @@ class TextField(UnDefaultAbleField):
     def __neg__(self):
         return '{} DESC'.format(self.fieldname)
 
-# 对于Mysql字段VARCHAR
-class VarcharField(DefaultAbleField):
-    def __init__(self, max_length=255, nullable=True, unique=False, default=None):
+# 对应Mysql的用TINYINT实现的BOOLEAN字段
+class BooleanField(DefaultAbleField):
+    def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
-        self.max_length = max_length
         self.nullable = nullable
         self.unique = unique
         self.default = default
 
     def _make_element(self):
-        sentence = '{} VARCHAR({})'.format(self.fieldname, self.max_length)
+        sentence = '{} TINYINT'.format(self.fieldname)
         if self.default is not None:
-            sentence += ' DEFAULT "{}"'.format(safe(self.default))
+            sentence += ' DEFAULT {}'.format(safe(int(self.default)))
         if not self.nullable:
             sentence += ' NOT NULL'
         if self.unique:
@@ -184,13 +248,13 @@ class VarcharField(DefaultAbleField):
         return sentence
 
     def _check(self, value):
-        if isinstance(value, str) or (value is None and self.nullable):
+        if isinstance(value, bool) or (value is None and self.nullable):
             return True
         return False
 
     def _value(self, value):
         if value is not None:
-            return '"{}"'.format(safe(value))
+            return '{}'.format(safe(int(value)))
         else:
             return 'NULL'
 
@@ -267,7 +331,7 @@ class IntField(DefaultAbleField):
     def __neg__(self):
         return '{} DESC'.format(self.fieldname)
 
-# 对应Mysql字段INT
+# 对应Mysql字段BIGINT
 class BigIntField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
