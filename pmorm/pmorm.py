@@ -1,8 +1,8 @@
+import pymysql
+
 VERSION = '0.13'
 __author__ = 'lwaix'
 __email__ = '1494645263@qq.com'
-
-import pymysql
 
 """
 TODO:
@@ -50,7 +50,7 @@ class Result:
             orders_list = list()
             for order in orders:
                 # 可以传过来的是类似Username之类的字段类型
-                if isinstance(order, field_types):
+                if isinstance(order, Field):
                     orders_list.append(order.fieldname)
                 # 可以传过来的是+,-处理过的str
                 elif isinstance(order, str):
@@ -105,8 +105,17 @@ class Result:
         return obj
 
 # ===Fields===
+class Field:
+    pass
+
+class DefaultAbleField(Field):
+    pass
+
+class UnDefaultAbleField(Field):
+    pass
+
 # 对应Mysql的TEXT字段
-class TextField:
+class TextField(UnDefaultAbleField):
     def __init__(self, nullable=True, unique=False):
         self.fieldname = None
         self.nullable = nullable
@@ -156,7 +165,7 @@ class TextField:
         return '{} DESC'.format(self.fieldname)
 
 # 对于Mysql字段VARCHAR
-class VarcharField:
+class VarcharField(DefaultAbleField):
     def __init__(self, max_length=255, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.max_length = max_length
@@ -202,7 +211,7 @@ class VarcharField:
         return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段INT
-class IntField:
+class IntField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.nullable = nullable
@@ -259,7 +268,7 @@ class IntField:
         return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段INT
-class BigIntField:
+class BigIntField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.nullable = nullable
@@ -316,7 +325,7 @@ class BigIntField:
         return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段FLOAT
-class FloatField:
+class FloatField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.nullable = nullable
@@ -374,7 +383,7 @@ class FloatField:
         return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段DOUBLE
-class DoubleField:
+class DoubleField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
         self.fieldname = None
         self.nullable = nullable
@@ -432,7 +441,7 @@ class DoubleField:
         return '{} DESC'.format(self.fieldname)
 
 # id字段,是这个orm得以正常运作的前提,每个Model都必须包含这个字段: id = PrimaryKeyField()
-class PrimaryKeyField():
+class PrimaryKeyField(UnDefaultAbleField):
     def __init__(self):
         self.fieldname = 'id'
 
@@ -478,8 +487,6 @@ class PrimaryKeyField():
     def __neg__(self):
         return '{} DESC'.format(self.fieldname)
 
-field_types = (TextField, VarcharField, IntField, BigIntField ,FloatField, DoubleField, PrimaryKeyField)
-defaultable = (VarcharField, IntField, BigIntField, FloatField, DoubleField)
 # ============
 
 class Base:
@@ -510,7 +517,7 @@ class Base:
             self.__setattr__(fieldname,kwargs.get(fieldname, None))
         # 定义了default的字段,会给它赋上默认值
         for field in fields.values():
-            if isinstance(field, defaultable):
+            if isinstance(field, DefaultAbleField):
                 if field.default is not None and self.__getattribute__(field.fieldname) is None:
                     self.__setattr__(field.fieldname,field.default)
 
@@ -527,7 +534,7 @@ class Base:
                     id_sign = True
                 # 如果类对象属于Fields,那么说明它就是被定义在Model中的字段,将它写入_fields
                 # _fields的格式:{fieldname1:field_obj1, fieldname2:field_obj2,...}
-                if isinstance(value, field_types):
+                if isinstance(value, Field):
                     # field对象也包含fieldname,需要赋值给它已保证其正常工作
                     value.fieldname = key
                     cla._fields[key] = value
@@ -614,7 +621,7 @@ class Base:
     # 如果对象已被插入则返回True
     def inserted(self):
         # 检查id是否通过检查 检查id是否为None
-        if self.__class__._get_fields().get('id')._check(self.id) and self.id == None:
+        if self.__class__._get_fields().get('id')._check(self.id) and self.id is None:
             return False
         return True
 

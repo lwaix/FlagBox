@@ -1,5 +1,4 @@
 # pmorm.py - 简约的Python3 Mysql ORM
-
 #### 功能概述
 
 - 面向模型操作
