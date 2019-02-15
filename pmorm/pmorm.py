@@ -12,8 +12,8 @@ TODO:
 """
 
 # 封装pymysql.Connect()函数
-def Mysql(*args, **kwargs):
-    return pymysql.connect(*args, **kwargs)
+def Mysql(host, user, password, database, port=3306, charset=''):
+    return pymysql.connect(host=host, user=user, password=password, database=database, port=port, charset=charset, cursorclass=pymysql.cursors.DictCursor)
 
 # 将字符串值转安全转意(返回值不包含''符号),防注入
 def safe(value):
@@ -41,11 +41,10 @@ class Query:
 # 封装查询结果
 class Result:
     def __init__(self, db, model, query, orders):
-        fieldnames_str = ','.join(list(model._get_fields().keys()))
         if query is None:
-            sentence = 'SELECT {} FROM {}'.format(fieldnames_str, model.Meta.table)
+            sentence = 'SELECT * FROM {}'.format(model.Meta.table)
         else:
-            sentence = 'SELECT {} FROM {} WHERE {}'.format(fieldnames_str, model.Meta.table, query.condition)
+            sentence = 'SELECT * FROM {} WHERE {}'.format(model.Meta.table, query.condition)
         if orders is not None:
             orders_list = list()
             for order in orders:
@@ -59,7 +58,7 @@ class Result:
         self.db = db
         self.model = model
         self.sentence = sentence
-        self.fields = list(model._get_fields().values())
+        self.fields = model._get_fields()
 
     def all(self):
         db = self.db
@@ -74,16 +73,11 @@ class Result:
         objs = list()
         for row in rows:
             obj = model()
-            index = 0
-            while index < len(fields):
-                field = fields[index]
-                row_value = row[index]
-                # 如果Boolean类型,将int类型转成bool型
-                if isinstance(field, BooleanField) and row_value is not None:
-                        obj.__setattr__(field.fieldname, bool(row_value))
+            for key, value in row.items():
+                if isinstance(fields.get(key) , BooleanField) and value is not None:
+                    obj.__setattr__(key, bool(value))
                 else:
-                    obj.__setattr__(field.fieldname, row_value)
-                index += 1
+                    obj.__setattr__(key, value)
             objs.append(obj)
         cursor.close()
         db.commit()
@@ -102,16 +96,11 @@ class Result:
             obj = None
         else:
             obj = model()
-            index = 0
-            while index < len(fields):
-                field = fields[index]
-                row_value = row[index]
-                # 如果Boolean类型,将int类型转成bool型
-                if isinstance(field, BooleanField) and row_value is not None:
-                    obj.__setattr__(field.fieldname, bool(row_value))
+            for key,value in row.items():
+                if isinstance(fields.get(key), BooleanField) and value is not None:
+                    obj.__setattr__(key, bool(value))
                 else:
-                    obj.__setattr__(field.fieldname, row_value)
-                index += 1
+                    obj.__setattr__(key, value)
         cursor.close()
         db.commit()
         return obj

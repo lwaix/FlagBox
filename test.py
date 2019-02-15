@@ -126,7 +126,7 @@ class Test(unittest.TestCase):
         user1.insert()
         cursor = db.cursor()
         cursor.execute('SELECT id FROM {}'.format(User.Meta.table))
-        id = cursor.fetchone()[0]
+        id = cursor.fetchone().get('id')
         self.assertEqual(id, 1)
         cursor.close()
 
