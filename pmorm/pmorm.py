@@ -1,6 +1,6 @@
 import pymysql
 
-VERSION = '0.14'
+VERSION = '0.15'
 __author__ = 'lwaix'
 __email__ = '1494645263@qq.com'
 
@@ -38,6 +38,14 @@ class Query:
         self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
 
+# DESC排序
+class DescOrder:
+    def __init__(self, fieldname):
+        self.order = '{} DESC'.format(fieldname)
+
+    def _get_order(self):
+        return self.order
+
 # 封装查询结果
 class Result:
     def __init__(self, db, model, query, orders):
@@ -48,23 +56,19 @@ class Result:
         if orders is not None:
             orders_list = list()
             for order in orders:
-                # 可以传过来的是类似Username之类的字段类型
-                if isinstance(order, Field):
-                    orders_list.append(order.fieldname)
-                # 可以传过来的是+,-处理过的str
-                elif isinstance(order, str):
-                    orders_list.append(order)
+                # 可以传过来的是字段类型,也可以是+,-处理过的Field或DescOrder类型,都可用_get_order()获取
+                orders_list.append(order._get_order())
             sentence = '{} ORDER BY {}'.format(sentence, ','.join(orders_list))
         self.db = db
         self.model = model
         self.sentence = sentence
-        self.fields = model._get_fields()
+        self.fields_dict = model._get_fields_dict()
 
     def all(self):
         db = self.db
         model = self.model
         sentence = self.sentence
-        fields = self.fields
+        fields_dict = self.fields_dict
 
         cursor = db.cursor()
         cursor.execute(sentence)
@@ -74,7 +78,7 @@ class Result:
         for row in rows:
             obj = model()
             for key, value in row.items():
-                if isinstance(fields.get(key) , BooleanField) and value is not None:
+                if isinstance(fields_dict.get(key) , BooleanField) and value is not None:
                     obj.__setattr__(key, bool(value))
                 else:
                     obj.__setattr__(key, value)
@@ -87,7 +91,7 @@ class Result:
         db = self.db
         model = self.model
         sentence = '{} LIMIT 1'.format(self.sentence)
-        fields = self.fields
+        fields_dict = self.fields_dict
 
         cursor = db.cursor()
         cursor.execute(sentence)
@@ -97,7 +101,7 @@ class Result:
         else:
             obj = model()
             for key,value in row.items():
-                if isinstance(fields.get(key), BooleanField) and value is not None:
+                if isinstance(fields_dict.get(key), BooleanField) and value is not None:
                     obj.__setattr__(key, bool(value))
                 else:
                     obj.__setattr__(key, value)
@@ -106,8 +110,42 @@ class Result:
         return obj
 
 # ===Fields===
+# 这是所有字段类型的父类,里面包含一个字段必须的元素
 class Field:
-    pass
+    def __init__(self):
+        self.fieldname = None
+    
+    def _make_element(self):
+        pass
+    
+    def _check(self):
+        pass
+    
+    def _value(self):
+        pass
+    
+    """
+    运算符中==,!=,+,-是必须的,但是可与定义其他的,例如>=,<=
+    """
+
+    # ==
+    def __eq__(self, value):
+        pass
+    
+    # !=
+    def __ne__(self, value):
+        pass
+    
+    # +
+    def __pos__(self):
+        return self
+
+    # -
+    def __neg__(self):
+        return DescOrder(self.fieldname)
+    
+    def _get_order(self):
+        return self.fieldname
 
 class DefaultAbleField(Field):
     pass
@@ -155,12 +193,6 @@ class VarcharField(DefaultAbleField):
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
 
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
-
 # 对应Mysql的TEXT字段
 class TextField(UnDefaultAbleField):
     def __init__(self, nullable=True, unique=False):
@@ -203,13 +235,6 @@ class TextField(UnDefaultAbleField):
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
 
-    # +:用于search降序排列
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    # -:用于search升序排列
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql的用TINYINT实现的BOOLEAN字段
 class BooleanField(DefaultAbleField):
@@ -249,12 +274,6 @@ class BooleanField(DefaultAbleField):
         if value is None:
             return Query('{} IS NOT NULL'.format(self.fieldname))
         return Query('{}!={}'.format(self.fieldname, self._value(value)))
-
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段INT
 class IntField(DefaultAbleField):
@@ -307,12 +326,6 @@ class IntField(DefaultAbleField):
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
-
 # 对应Mysql字段BIGINT
 class BigIntField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
@@ -363,12 +376,6 @@ class BigIntField(DefaultAbleField):
 
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
-
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
 
 # 对应Mysql字段FLOAT
 class FloatField(DefaultAbleField):
@@ -422,12 +429,6 @@ class FloatField(DefaultAbleField):
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
-
 # 对应Mysql字段DOUBLE
 class DoubleField(DefaultAbleField):
     def __init__(self, nullable=True, unique=False, default=None):
@@ -480,12 +481,6 @@ class DoubleField(DefaultAbleField):
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
-
 # id字段,是这个orm得以正常运作的前提,每个Model都必须包含这个字段: id = PrimaryKeyField()
 class PrimaryKeyField(UnDefaultAbleField):
     def __init__(self):
@@ -527,12 +522,6 @@ class PrimaryKeyField(UnDefaultAbleField):
     def __le__(self, value):
         return Query('{}<={}'.format(self.fieldname, self._value(value)))
 
-    def __pos__(self):
-        return '{}'.format(self.fieldname)
-
-    def __neg__(self):
-        return '{} DESC'.format(self.fieldname)
-
 # ============
 
 class Base:
@@ -551,10 +540,11 @@ class Base:
         if not cla._init_sign:
             cla._fields = dict()
             id_sign = False
-            for key,value in cla.__dict__.items():
+            for key, value in cla.__dict__.items():
                 # 检查是否定义了id字段
-                if (not id_sign) and (key == 'id' and isinstance(value, PrimaryKeyField)):
-                    id_sign = True
+                if not id_sign :
+                    if key == 'id' and isinstance(value, PrimaryKeyField):
+                        id_sign = True
                 # 如果类对象属于Fields,那么说明它就是被定义在Model中的字段,将它写入_fields
                 # _fields的格式:{fieldname1:field_obj1, fieldname2:field_obj2,...}
                 if isinstance(value, Field):
@@ -568,43 +558,48 @@ class Base:
 
     # 获取_fields
     @classmethod
-    def _get_fields(cla):
+    def _get_fields_dict(cla):
         return cla._fields
 
     # 获取当前对象的数据
     def _get_current_data(self):
-        fieldnames = self.__class__._get_fields().keys()
-        res = dict()
+        fieldnames = self.__class__._get_fields_dict().keys()
+        result = dict()
         for fieldname in fieldnames:
-            res[fieldname] = self.__getattribute__(fieldname)
-        return res
+            # __init__时即使未赋值的字段也自动赋值为None了,所以不用担心访问到Field对象
+            result[fieldname] = self.__getattribute__(fieldname)
+        return result
     
     # 如果对象已被插入则返回True
     def inserted(self):
         # 检查id是否通过检查 检查id是否为None
-        if self.__class__._get_fields().get('id')._check(self.id) and self.id is None:
+        if self.__class__._get_fields_dict().get('id')._check(self.id) and self.id is None:
             return False
         return True
 
     # 接收本对象的各个字段值,没有赋值的默认为None
     def __init__(self, **kwargs):
         self.__class__._init()
-        fields = self.__class__._get_fields()
-        fieldnames = fields.keys()
+        fields_dict = self.__class__._get_fields_dict()
+        fieldnames = fields_dict.keys()
+        fields = fields_dict.values()
         keys = kwargs.keys()
 
-        # 检查是否给id赋值
-        if 'id' in keys:
-            raise ValueError('不可赋值字段:id')
+        # # 检查是否给id赋值
+        # if 'id' in keys:
+        #     raise ValueError('不可赋值字段:id')
+
         # 检查未知的参数
         for key in keys:
             if key not in fieldnames:
                 raise ValueError('未知的参数:{}'.format(key))
+
         # 设置对象的值
         for fieldname in fieldnames:
-            self.__setattr__(fieldname,kwargs.get(fieldname, None))
-        # 定义了default的字段,会给它赋上默认值
-        for field in fields.values():
+            self.__setattr__(fieldname, kwargs.get(fieldname, None))
+
+        # 定义了default的字段但没有赋值的,给它赋上默认值
+        for field in fields:
             if isinstance(field, DefaultAbleField):
                 if field.default is not None and self.__getattribute__(field.fieldname) is None:
                     self.__setattr__(field.fieldname,field.default)
@@ -616,11 +611,11 @@ class Base:
         db = cla.Meta.db
         table = cla.Meta.table
         cursor = db.cursor()
-        fields = cla._get_fields().values()
+        fields = cla._get_fields_dict().values()
 
         field_elements = list()
-        for value in fields:
-            field_elements.append(value._make_element())
+        for field in fields:
+            field_elements.append(field._make_element())
 
         sentence = 'CREATE TABLE IF NOT EXISTS {} ({})'.format(table, ','.join(field_elements))
         cursor.execute(sentence)
@@ -643,28 +638,31 @@ class Base:
     # 插入操作
     def insert(self):
         self.__class__._init()
+
         # 被插入过的对象无法被重复插入
         if self.inserted():
             raise RuntimeError('该对象已被插入,不可重复插入')
+
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
         current_data = self._get_current_data()
-        fields = self.__class__._get_fields().values()
-
+        fields = self.__class__._get_fields_dict().values()
         fieldnames = list()
         values = list()
-        # 类型检查
+
+        # 类型检查并获取字段名与值
         for field in fields:
             fieldname = field.fieldname
             if field._check(current_data.get(fieldname)):
-                # id不需要插入,值为None的也不需要插入
+                # id不需要插入 值为None的也不需要插入(所有字段没设置DEFAULT的默认都为NULL)
                 if fieldname == 'id' or current_data.get(fieldname) is None:
                     continue
                 fieldnames.append(fieldname)
                 values.append(field._value(((current_data.get(fieldname)))))
             else:
                 raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), field.fieldname))
+
         sentence = 'INSERT INTO {} ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
         cursor.execute(sentence)
         cursor.close()
@@ -689,17 +687,17 @@ class Base:
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
-        fields = self.__class__._get_fields().values()
+        fields = self.__class__._get_fields_dict().values()
         current_data = self._get_current_data()
 
-        elements = list()
+        set_elements = list()
         for field in fields:
             fieldname = field.fieldname
             value = current_data.get(fieldname)
             if not field._check(value):
-                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), fieldname))
-            elements.append('{}={}'.format(field.fieldname,field._value(value)))
-        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, ','.join(elements), self.id)
+                raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(value, fieldname))
+            set_elements.append('{}={}'.format(field.fieldname,field._value(value)))
+        sentence = 'UPDATE {} SET {} WHERE id={}'.format(table, ','.join(set_elements), self.id)
         cursor.execute(sentence)
         cursor.close()
         db.commit()
@@ -707,9 +705,11 @@ class Base:
     # 删除该对象
     def delete(self):
         self.__class__._init()
+
         # 没被插入的无法被删除
         if not self.inserted():
             raise RuntimeError('该对象不可删除')
+
         db = self.__class__.Meta.db
         table = self.__class__.Meta.table
         cursor = db.cursor()
