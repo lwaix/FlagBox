@@ -15,9 +15,7 @@ shell>pip install Pmorm
 
 ## 使用教程
 
-### 使用前
-
-#### 为程序创建数据库
+### 使用前为程序创建数据库
 
 ```
 mysql>CREATE DATABASE testdb;
@@ -27,6 +25,8 @@ mysql>CREATE DATABASE testdb;
 
 ##### 建立Mysql连接
 
+---
+
 ```python
 from pmorm import Mysql
 
@@ -35,8 +35,10 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 
 #### 编写模型并建表
 
+---
+
 ```python
-from pmorm import Base, PrimaryKeyField, VarcharField
+from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
 
 # 定义模型类User
 class User(Base):
@@ -49,6 +51,7 @@ class User(Base):
     id = PrimaryKeyField()  # id字段是必须的
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
+    balance = DoubleField(nullable=False, unique=True, default=0.0)
 
 # 如果表未被创建,则创建该表
 User.create_table()
@@ -56,12 +59,14 @@ User.create_table()
 
 #### 插入
 
+---
+
 ```python
 # 简单插入
 user1 = User(username='user1', password='passwd1')
 user1.insert()
 
-# 也可以这样
+# 这样也行
 user2 = User()
 user2.username = 'user2'
 user2.password = 'passwd2'
@@ -73,56 +78,94 @@ user3.username = 'user3'
 user3.password = 'passwd3'
 user3.insert()
 
-# inserted() 方法检查对象是否被插入(被插入的对象无法被重复插入)
+# 检查对象是否被插入
 print(user1.inserted()) # True
 ```
 
 #### 搜索
 
+---
+
+##### 获取所有用户
+
 ```python
-# 获取所有内容并逐个遍历
 users = User.search().all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# 条件查询
-users = User.search(User.username != 'unkonw').all()
 for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
 
-# 组合条件查询(利用|和&运算符)
+##### 根据条件筛选
+
+```python
+users = User.search(User.username != 'unkonwn').all()
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
+
+##### 组合条件筛选
+
+```python
+# 利用 | 和 & 运算符组合条件
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 
-# 将搜索结果根据字段排序
-users = User.search(
-    (User.username!='user1') | (User.password!='passwd1'),
-    orders=[User.id] # 按id倒叙排列
-).all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+"""
+# 下面代码与上面代码结果相同
+# 但不同点是用first()方法获取第一个元素更快
+
+user1 = User.search(
+    (User.username=='user1') & (User.password=='passwd1')
+).all()[0]
+"""
+
+print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
-##### 注意: search()方法返回一个 Result 对象, 可以使用它的方法 all() 获取所有对象(返回list), 与 first() 得到第一个
+##### 排序查询结果
+
+```python
+users = User.search(
+    (User.username!='user1') | (User.password!='passwd1'),
+    orders=[-User.id] # 按id倒叙排列
+).all()
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
+
+##### 使用limit
+
+```python
+# all() 方法中可选的limit参数可限制
+users = User.search(User.username!='unknown').all(limit=(0,2)) # 这里只返回前两个,相当于LIMIT 0, 2
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
 
 #### 更新
+
+---
 
 ```python
 # 首先获取对象
 user1 = User.search(
     ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # 复杂查询
 ).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 
 # 修改并提交
 user1.username = 'edit'
 user1.update()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
 #### 删除
+
+---
 
 ```python
 # 首先获取对象
@@ -134,17 +177,6 @@ user1.delete()
 ---
 
 ## 其他
-
-### 关于 Mysql() 函数
-
-#### Mysql() 函数代码
-
-```python
-def Mysql(*args, **kwargs):
-    return pymysql.connect(*args, **kwargs)
-```
-
-#### Mysql() 函数实际是 pymysql.connect() 函数的封装,更多信息,参见pymysql文档
 
 ### 目前支持的字段类型
 

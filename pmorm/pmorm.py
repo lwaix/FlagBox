@@ -38,7 +38,7 @@ class Query:
         self.condition = '({})'.format(self.condition + ' OR ' + obj.condition)
         return self
 
-# DESC排序
+# DESC排序类
 class DescOrder:
     def __init__(self, fieldname):
         self.order = '`{}` DESC'.format(fieldname)
@@ -46,7 +46,7 @@ class DescOrder:
     def _get_order(self):
         return self.order
 
-# 封装查询结果
+# 查询结果类
 class Result:
     def __init__(self, db, model, query, orders):
         if query is None:
@@ -64,11 +64,14 @@ class Result:
         self.sentence = sentence
         self.fields_dict = model._get_fields_dict()
 
-    def all(self):
+    def all(self, limit=None):
         db = self.db
         model = self.model
         sentence = self.sentence
         fields_dict = self.fields_dict
+
+        if limit is not None:
+            sentence = '{} LIMIT {},{}'.format(self.sentence, limit[0], limit[1])
 
         cursor = db.cursor()
         cursor.execute(sentence)
@@ -537,7 +540,7 @@ class Base:
     def _init(cla):
         # 检查是否已初始化
         if not cla._init_sign:
-            cla._fields = dict()
+            cla._fields_dict = dict()
             id_sign = False
             for key, value in cla.__dict__.items():
                 # 检查是否定义了id字段
@@ -549,7 +552,7 @@ class Base:
                 if isinstance(value, Field):
                     # field对象也包含fieldname,需要赋值给它已保证其正常工作
                     value.fieldname = key
-                    cla._fields[key] = value
+                    cla._fields_dict[key] = value
             if not id_sign:
                 raise AttributeError('未定义的字段:id')
             # 标记已经初始化
@@ -558,7 +561,7 @@ class Base:
     # 获取_fields
     @classmethod
     def _get_fields_dict(cla):
-        return cla._fields
+        return cla._fields_dict
 
     # 获取当前对象的数据
     def _get_current_data(self):
