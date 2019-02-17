@@ -23,7 +23,7 @@ mysql>CREATE DATABASE testdb;
 
 ### 快速开始
 
-##### 建立Mysql连接
+#### 建立Mysql连接
 
 ---
 
@@ -33,9 +33,9 @@ from pmorm import Mysql
 mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 ```
 
-#### 编写模型并建表
-
 ---
+
+#### 编写模型并建表
 
 ```python
 from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
@@ -57,9 +57,9 @@ class User(Base):
 User.create_table()
 ```
 
-#### 插入
-
 ---
+
+#### 插入
 
 ```python
 # 简单插入
@@ -82,9 +82,9 @@ user3.insert()
 print(user1.inserted()) # True
 ```
 
-#### 搜索
-
 ---
+
+#### 搜索
 
 ##### 获取所有用户
 
@@ -146,9 +146,9 @@ for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
 ```
 
-#### 更新
-
 ---
+
+#### 更新
 
 ```python
 # 首先获取对象
@@ -163,9 +163,9 @@ user1.update()
 print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
-#### 删除
-
 ---
+
+#### 删除
 
 ```python
 # 首先获取对象
