@@ -23,9 +23,9 @@ mysql>CREATE DATABASE testdb;
 
 ### 快速开始
 
-#### 建立Mysql连接
-
 ---
+
+#### 建立Mysql连接
 
 ```python
 from pmorm import Mysql
@@ -139,8 +139,7 @@ for user in users:
 ##### 使用limit
 
 ```python
-# all() 方法中可选的limit参数可限制
-users = User.search(User.username!='unknown').all(limit=(0,2)) # 这里只返回前两个,相当于LIMIT 0, 2
+users = User.search(User.username!='unknown').all(limit=(0,2)) # 限制只返回查询结果前两个,相当于"LIMIT 0, 2"
 
 for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))

@@ -17,15 +17,15 @@ shell>pip install Pmorm
 
 ## Usage
 
-### Before using
-
-#### Create a database for the program
+### Create a database for the program before using
 
 ```
 mysql>CREATE DATABASE testdb;
 ```
 
 ### Quick start
+
+---
 
 #### Create a mysql connection
 
@@ -35,10 +35,12 @@ from pmorm import Mysql
 mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 ```
 
+---
+
 #### Create a model and create the table
 
 ```python
-from pmorm import Base, PrimaryKeyField, VarcharField
+from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
 
 # Model class
 class User(Base):
@@ -51,10 +53,13 @@ class User(Base):
     id = PrimaryKeyField()  # id field must be defined like this
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
+    balance = DoubleField(nullable=False, unique=True, default=0.0)
 
 # Create table if it hasn't been created
 User.create_table()
 ```
+
+---
 
 #### Insert
 
@@ -79,35 +84,70 @@ user3.insert()
 print(user1.inserted()) # True
 ```
 
+---
+
 #### Search
 
+##### Get all
+
 ```python
-# Get all and print them one by one
 users = User.search().all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
 
-# Search by one condition
-users = User.search(User.username != 'unkonw').all()
 for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
 
-# Search by conditions of the combination(using & and | operators)
+##### Search all by one condition
+
+```python
+users = User.search(User.username != 'unkonwn').all()
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
+
+##### Search by combination queries
+
+```python
+# By using | and & operators
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 
-# Sort by using the "orders" option
-users = User.search(
-    (User.username!='user1') | (User.password!='passwd1'),
-    orders=[User.id]
-).all()
-for user in users:
-    print("id:{} username:{} password:{}".format(user.id, user.username, user.password))
+"""
+# The result of the above two code queries is the same.
+# The difference is first() method is faster
+
+user1 = User.search(
+    (User.username=='user1') & (User.password=='passwd1')
+).all()[0]
+"""
+
+print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
-##### Attention: search() method returns a "Result" object, you can get specific data by its methods all() and first()
+##### Sort by using the "orders" option
+
+```python
+users = User.search(
+    (User.username!='user1') | (User.password!='passwd1'),
+    orders=[-User.id] # Sort by id in reverse order
+).all()
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
+
+##### Using the limit
+
+```python
+users = User.search(User.username!='unknown').all(limit=(0,2)) # limit only returns the first two results of the query, equivalent to "LIMIT 0, 2"
+
+for user in users:
+    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
+```
+
+---
 
 #### Edit
 
@@ -117,11 +157,14 @@ user1 = User.search(
     ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # Complex queries
 ).first()
 print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+
 # Edit it and update
 user1.username = 'edit'
 user1.update()
 print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
 ```
+
+---
 
 #### Delete
 
