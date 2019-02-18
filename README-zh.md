@@ -1,6 +1,6 @@
 # pmorm.py - 简约的Python3 Mysql ORM
 
-![py35][py35]
+[![](https://img.shields.io/badge/python-3.5-red.svg)] [![](https://img.shields.io/badge/license-3.5-green.svg)]
 
 #### 功能概述
 

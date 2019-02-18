@@ -2,6 +2,8 @@
 
 # pmorm.py - a simple mysql orm for python3
 
+[![](https://img.shields.io/badge/python-3.5-red.svg)] [![](https://img.shields.io/badge/license-3.5-green.svg)]
+
 ![py35][py35]
 
 #### Functional overview
