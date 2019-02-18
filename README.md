@@ -2,10 +2,12 @@
 
 # pmorm.py - a simple mysql orm for python3
 
+![py35][py35]
+
 #### Functional overview
 
 - Model-Oriented Operations
-- Basic additions, deletions, checks and amendments
+- Basic CRUD
 - Query query
 - Automatic Safety Escape
 
