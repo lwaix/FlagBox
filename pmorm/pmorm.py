@@ -1,19 +1,19 @@
 import pymysql
 
-VERSION = '0.15.2'
+VERSION = '0.15.3'
 __author__ = 'lwaix'
 __email__ = '1494645263@qq.com'
 
 """
 TODO:
     - 重构代码
-    - 更多字段
     - 完善单测
+    - 支持sqlite3
 """
 
 # 封装pymysql.Connect()函数
 def Mysql(host, user, password, database, port=3306, charset=''):
-    return pymysql.connect(host=host, user=user, password=password, database=database, port=port, charset=charset, cursorclass=pymysql.cursors.DictCursor)
+    return pymysql.connect(host=host, user=user, password=password, database=database, port=port, charset=charset, autocommit=True, cursorclass=pymysql.cursors.DictCursor)
 
 # 将字符串值转安全转意(返回值不包含''符号),防注入
 def safe(value):
@@ -71,11 +71,15 @@ class Result:
         fields_dict = self.fields_dict
 
         if limit is not None:
-            sentence = '{} LIMIT {},{}'.format(self.sentence, limit[0], limit[1])
+            if len(limit) == 2:
+                sentence = '{} LIMIT {},{}'.format(self.sentence, limit[0], limit[1])
+            elif len(limit) == 1:
+                sentence = '{} LIMIT {}'.format(self.sentence, limit[0])
 
         cursor = db.cursor()
         cursor.execute(sentence)
         rows = cursor.fetchall()
+        cursor.close()
 
         objs = list()
         for row in rows:
@@ -86,8 +90,6 @@ class Result:
                 else:
                     obj.__setattr__(key, value)
             objs.append(obj)
-        cursor.close()
-        db.commit()
         return objs
 
     def first(self):
@@ -99,6 +101,8 @@ class Result:
         cursor = db.cursor()
         cursor.execute(sentence)
         row = cursor.fetchone()
+        cursor.close()
+
         if row is None:
             obj = None
         else:
@@ -108,8 +112,6 @@ class Result:
                     obj.__setattr__(key, bool(value))
                 else:
                     obj.__setattr__(key, value)
-        cursor.close()
-        db.commit()
         return obj
 
 # ===Fields===
@@ -618,20 +620,17 @@ class Base:
         sentence = 'CREATE TABLE IF NOT EXISTS `{}` ({})'.format(table, ','.join(field_elements))
         cursor.execute(sentence)
         cursor.close()
-        db.commit()
 
     # 删表操作
     @classmethod
     def drop_table(cla):
         cla._init()
-        db = cla.Meta.db
         table = cla.Meta.table
         cursor = cla.Meta.db.cursor()
 
         sentence = 'DROP TABLE IF EXISTS `{}`'.format(table)
         cursor.execute(sentence)
         cursor.close()
-        db.commit()
 
     # 插入操作
     def insert(self):
@@ -664,7 +663,7 @@ class Base:
         sentence = 'INSERT INTO `{}` ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
         cursor.execute(sentence)
         cursor.close()
-        db.commit()
+
         # 标记该对象id
         self.id = cursor.lastrowid
 
@@ -700,7 +699,6 @@ class Base:
         sentence = 'UPDATE `{}` SET {} WHERE `id`={}'.format(table, ','.join(set_elements), self.id)
         cursor.execute(sentence)
         cursor.close()
-        db.commit()
 
     # 删除该对象
     def delete(self):
@@ -717,5 +715,4 @@ class Base:
         sentence = 'DELETE FROM `{}` WHERE `id`={}'.format(table, self.id)
         cursor.execute(sentence)
         cursor.close()
-        db.commit()
         self.id = None

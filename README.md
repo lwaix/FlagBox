@@ -3,14 +3,15 @@
 # pmorm.py - a simple mysql orm for python3
 
 ![](https://img.shields.io/badge/python-3.5-red.svg)
+
 ![](https://img.shields.io/badge/license-MIT-green.svg)
 
 #### Functional overview
 
-- Model-Oriented Operations
+- Model-Oriented operations
 - Basic CRUD
-- Query query
-- Automatic Safety Escape
+- Operator query
+- Automatic safety escape
 
 ## Installing
 

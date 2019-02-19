@@ -1,13 +1,14 @@
 # pmorm.py - 简约的Python3 Mysql ORM
 
 ![](https://img.shields.io/badge/python-3.5-red.svg)
+
 ![](https://img.shields.io/badge/license-MIT-green.svg)
 
 #### 功能概述
 
 - 面向模型操作
 - 基本增删查改
-- Query查询
+- 运算符式查询
 - 自动安全转义
 
 ## 安装
