@@ -29,7 +29,7 @@ mysql>CREATE DATABASE testdb;
 
 ---
 
-#### 建立Mysql连接
+#### 建立连接
 
 ```python
 from pmorm import Mysql
@@ -44,20 +44,21 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 ```python
 from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
 
-# 定义模型类User
+# 定义模型User
 class User(Base):
-    # 内置类Meta被用来配置数据库与表名
+    # 内置类Meta用来配置数据库与表名
     class Meta:
         db = mydb
         table = 'user'
 
-    # 编写模型的字段
-    id = PrimaryKeyField()  # id字段是必须的
+    # 编写模型的字段(为了正常工作,其中id字段必须定义)
+    id = PrimaryKeyField()
+
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
     balance = DoubleField(nullable=False, unique=True, default=0.0)
 
-# 如果表未被创建,则创建该表
+# 如表未创建,则创建该表
 User.create_table()
 ```
 
@@ -74,6 +75,7 @@ user1.insert()
 user2 = User()
 user2.username = 'user2'
 user2.password = 'passwd2'
+user2.balance = 3000.0
 user2.insert()
 
 # 插入前可修改
@@ -111,18 +113,24 @@ for user in users:
 ##### 组合条件筛选
 
 ```python
-# 利用 | 和 & 运算符组合条件
+# 利用 | 和 & 运算符组合条件以支持更复杂的查询
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).first()
 
 """
-# 下面代码与上面代码结果相同
-# 但不同点是用first()方法获取第一个元素更快
+注意:
+  - 下面代码与上面代码返回结果相同
+  - 不同点是:`first()`方法获取第一个元素更快,它直接查询了第一个
+  - 而`all()[0]`先查询所有再获取第一个
 
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).all()[0]
+
+结论:
+  - 如果只需要获取第一个,用`first()`
+  - 如果需要得到所有,用`all()`
 """
 
 print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
@@ -144,6 +152,7 @@ for user in users:
 
 ```python
 users = User.search(User.username!='unknown').all(limit=(0,2)) # 限制只返回查询结果前两个,相当于"LIMIT 0, 2"
+# 等同于:`users = User.search(User.username!='unknown').all(limit=(2))`
 
 for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))

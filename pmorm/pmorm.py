@@ -1,8 +1,6 @@
 import pymysql
 
 VERSION = '0.15.3'
-__author__ = 'lwaix'
-__email__ = '1494645263@qq.com'
 
 """
 TODO:

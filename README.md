@@ -31,7 +31,7 @@ mysql>CREATE DATABASE testdb;
 
 ---
 
-#### Create a mysql connection
+#### Create the connection
 
 ```python
 from pmorm import Mysql
@@ -76,9 +76,10 @@ user1.insert()
 user2 = User()
 user2.username = 'user2'
 user2.password = 'passwd2'
+user2.balance = 3000.0
 user2.insert()
 
-# Modify it before inserting
+# You can modify it before inserting
 user3 = User(username='userx')
 user3.username = 'user3'
 user3.password = 'passwd3'
@@ -119,12 +120,19 @@ user1 = User.search(
 ).first()
 
 """
-# The result of the above two code queries is the same.
-# The difference is first() method is faster
+Attention:
+  - The code below is the same as the result above
+  - The difference:`first()` function selects only the first,it's faster
+  - But `all()[0]` gets all the first and then take the first one,it's slower
 
 user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).all()[0]
+
+
+In conclusion:
+  - If you only need to get the first one, use `first()`
+  - If you need to get all, use `all()`
 """
 
 print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
@@ -146,6 +154,7 @@ for user in users:
 
 ```python
 users = User.search(User.username!='unknown').all(limit=(0,2)) # limit only returns the first two results of the query, equivalent to "LIMIT 0, 2"
+# Equivalent to:`users = User.search(User.username!='unknown').all(limit=(2))`
 
 for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
@@ -153,7 +162,7 @@ for user in users:
 
 ---
 
-#### Edit
+#### Update
 
 ```python
 # Get one first
@@ -165,7 +174,7 @@ print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.pas
 # Edit it and update
 user1.username = 'edit'
 user1.update()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
+print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
 ---
