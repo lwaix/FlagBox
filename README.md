@@ -44,14 +44,12 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 #### Create a model and create the table
 
 ```python
-from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
+from pmorm import PrimaryKeyField, VarcharField, DoubleField
 
 # Model class
-class User(Base):
-    # Built-in class Meta for configuring database and table
-    class Meta:
-        db = mydb
-        table = 'user'
+class User(mydb.Model):
+    # Config the table name
+    __table__ = 'user'
 
     # Define fields in a model
     id = PrimaryKeyField()  # id field must be defined like this

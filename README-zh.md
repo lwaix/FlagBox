@@ -42,14 +42,12 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
 #### 编写模型并建表
 
 ```python
-from pmorm import Base, PrimaryKeyField, VarcharField, DoubleField
+from pmorm import PrimaryKeyField, VarcharField, DoubleField
 
 # 定义模型User
-class User(Base):
-    # 内置类Meta用来配置数据库与表名
-    class Meta:
-        db = mydb
-        table = 'user'
+class User(mydb.Model):
+    # 配置表名
+    __table__ = 'user'
 
     # 编写模型的字段(为了正常工作,其中id字段必须定义)
     id = PrimaryKeyField()

@@ -1,1 +1,1 @@
-from .pmorm import VERSION, Mysql, Base, PrimaryKeyField, BooleanField, IntField, BigIntField, FloatField, DoubleField, VarcharField, TextField
+from .pmorm import VERSION, Mysql, PrimaryKeyField, BooleanField, IntField, BigIntField, FloatField, DoubleField, VarcharField, TextField
