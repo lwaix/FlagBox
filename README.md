@@ -207,10 +207,9 @@ TextField|TEXT
 
 ```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
-class ModelName(Base):
-    class Meta:
-        db = mydb
-        table = 'mytable'
+class ModelName(mydb.Model):
+    __table__ = 'mytable'
+
     id = PrimaryKeyField()
     # Other fields...
 ```
