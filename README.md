@@ -6,7 +6,7 @@
 
 ![](https://img.shields.io/badge/license-MIT-green.svg)
 
-#### Functional overview
+Functional overview
 
 - Model-Oriented operations
 - Basic CRUD
@@ -19,40 +19,33 @@
 shell>pip install Pmorm
 ```
 
-## Usage
+## Quick start
 
-### Create a database for the program before using
+### Create a database first
+
+---
 
 ```
 mysql>CREATE DATABASE testdb;
 ```
 
-### Quick start
+### Connect the database,create a model and create the table
 
 ---
 
-#### Create the connection
-
 ```python
-from pmorm import Mysql
+from pmorm import Mysql, PrimaryKeyField, VarcharField, DoubleField
 
 mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
-```
-
----
-
-#### Create a model and create the table
-
-```python
-from pmorm import PrimaryKeyField, VarcharField, DoubleField
 
 # Model class
 class User(mydb.Model):
     # Config the table name
     __table__ = 'user'
 
-    # Define fields in a model
-    id = PrimaryKeyField()  # id field must be defined like this
+    # Define fields in a model(The id field must be defined)
+    id = PrimaryKeyField()
+
     username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
     password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
     balance = DoubleField(nullable=False, unique=True, default=0.0)
@@ -61,9 +54,9 @@ class User(mydb.Model):
 User.create_table()
 ```
 
----
+### Insert
 
-#### Insert
+---
 
 ```python
 # A easy way
@@ -87,11 +80,11 @@ user3.insert()
 print(user1.inserted()) # True
 ```
 
+### Search
+
 ---
 
-#### Search
-
-##### Get all
+Get all
 
 ```python
 users = User.search().all()
@@ -100,7 +93,7 @@ for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
 ```
 
-##### Search all by one condition
+Search all by one condition
 
 ```python
 users = User.search(User.username != 'unkonwn').all()
@@ -109,7 +102,7 @@ for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
 ```
 
-##### Search by combination queries
+Search by combination queries
 
 ```python
 # By using | and & operators
@@ -127,7 +120,6 @@ user1 = User.search(
     (User.username=='user1') & (User.password=='passwd1')
 ).all()[0]
 
-
 In conclusion:
   - If you only need to get the first one, use `first()`
   - If you need to get all, use `all()`
@@ -136,7 +128,7 @@ In conclusion:
 print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
-##### Sort by using the "orders" option
+Sort by using the "orders" option
 
 ```python
 users = User.search(
@@ -148,7 +140,7 @@ for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
 ```
 
-##### Using the limit
+Use the limit
 
 ```python
 users = User.search(User.username!='unknown').all(limit=(0,2)) # limit only returns the first two results of the query, equivalent to "LIMIT 0, 2"
@@ -158,9 +150,9 @@ for user in users:
     print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
 ```
 
----
+### Update
 
-#### Update
+---
 
 ```python
 # Get one first
@@ -175,9 +167,9 @@ user1.update()
 print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
 ```
 
----
+### Delete
 
-#### Delete
+---
 
 ```python
 # Get one first
@@ -185,8 +177,6 @@ user1 = User.search(User.username=='edit').first()
 # Delete it
 user1.delete()
 ```
-
----
 
 ## Else
 
@@ -203,7 +193,7 @@ DoubleField|DOUBLE
 VarcharField|VARCHAR
 TextField|TEXT
 
-#### PrimaryKeyField must be defined in each model, so a basic model looks like...
+PrimaryKeyField must be defined in each model, so a basic model looks like...
 
 ```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
