@@ -17,13 +17,14 @@ class Mysql:
 
             # 在每个操作里面都检查是否init,仅仅执行一次_init()方法
             _init_sign = False
+            _fields_dict = None
 
             # 初始化该Model,将字段名写入_fields,将字段名写入对应字段对象,并标记已初始化,只初始化一次
             @classmethod
             def _init(cla):
                 # 检查是否已初始化
                 if not cla._init_sign:
-                    cla._fields_dict = dict()
+                    fields_dict = dict()
                     id_sign = False
                     for key, value in cla.__dict__.items():
                         # 检查是否定义了id字段
@@ -35,9 +36,10 @@ class Mysql:
                         if isinstance(value, Field):
                             # field对象也包含fieldname,需要赋值给它已保证其正常工作
                             value.fieldname = key
-                            cla._fields_dict[key] = value
+                            fields_dict[key] = value
                     if not id_sign:
                         raise AttributeError('未定义的字段:id')
+                    cla._fields_dict = fields_dict
                     # 标记已经初始化
                     cla._init_sign = True
 
