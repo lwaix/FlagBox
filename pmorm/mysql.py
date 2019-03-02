@@ -1,7 +1,5 @@
 import pymysql
 
-VERSION = '0.17'
-
 """
 TODO:
     - 优化代码
@@ -200,6 +198,14 @@ class Mysql:
                 cursor.close()
                 self.id = None
         self.Model = MysqlModel
+        self.PrimaryKeyField = PrimaryKeyField
+        self.BooleanField = BooleanField
+        self.IntField = IntField
+        self.BigIntField = BigIntField
+        self.FloatField = FloatField
+        self.DoubleField = DoubleField
+        self.VarcharField = VarcharField
+        self.TextField = TextField
 
 # 将字符串值转安全转意(返回值不包含''符号),防注入
 def safe(value):
@@ -207,7 +213,7 @@ def safe(value):
     if isinstance(value, str):
         return pymysql.escape_string(value)
     else:
-        return value
+        return str(value)
 
 # 查询条件对象,拼接查询条件部分(WHERE之后)的语句
 class Query:
@@ -673,7 +679,7 @@ class DoubleField(DefaultAbleField):
 class PrimaryKeyField(UnDefaultAbleField):
     def __init__(self):
         self.fieldname = 'id'
-    
+
     def _make_element(self):
         return '`{}` INT NOT NULL AUTO_INCREMENT PRIMARY KEY'.format(self.fieldname)
 

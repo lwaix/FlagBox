@@ -19,163 +19,66 @@ Functional overview
 shell>pip install Pmorm
 ```
 
-## Quick start
+## Basic
 
 ### Create a database first
-
----
 
 ```
 mysql>CREATE DATABASE testdb;
 ```
 
-### Connect the database,create a model and create the table
-
----
+### Quick start
 
 ```python
-from pmorm import Mysql, PrimaryKeyField, VarcharField, DoubleField
+from pmorm import Mysql
 
-mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
+db = Mysql('localhost', 'root', 'your-password', 'testdb1')
 
-# Model class
-class User(mydb.Model):
-    # Config the table name
-    __table__ = 'user'
+class Worker(db.Model):
+    __table__ = 'worker'
 
-    # Define fields in a model(The id field must be defined)
-    id = PrimaryKeyField()
+    id = db.PrimaryKeyField()
+    username = db.VarcharField(max_length=32, nullable=False, unique=True, default=None)
+    password = db.VarcharField(max_length=32, nullable=False, unique=False, default=None)
+    salary = db.FloatField(nullable=False, unique=False, default=0.0)
 
-    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
-    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
-    balance = DoubleField(nullable=False, unique=True, default=0.0)
+Worker.create_table()
 
-# Create table if it hasn't been created
-User.create_table()
-```
+# Insert
+jack = Worker(username='Jack', password='JackSoHandsome', salary=3999.2)
+jack.insert()
 
-### Insert
+mary = Worker()
+mary.username = 'Mary'
+mary.password = 'MarySoBeautiful'
+mary.insert()
 
----
+# Get all and get the first
+all_workers = Worker.search().all()
+the_first_worker = Worker.search().first()
 
-```python
-# A easy way
-user1 = User(username='user1', password='passwd1')
-user1.insert()
+# Query by operators
+rich_workers = Worker.search(Worker.salary>=3000.0).all()
 
-# Another way
-user2 = User()
-user2.username = 'user2'
-user2.password = 'passwd2'
-user2.balance = 3000.0
-user2.insert()
-
-# You can modify it before inserting
-user3 = User(username='userx')
-user3.username = 'user3'
-user3.password = 'passwd3'
-user3.insert()
-
-# Cheak if objects has been inserted
-print(user1.inserted()) # True
-```
-
-### Search
-
----
-
-Get all
-
-```python
-users = User.search().all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-Search all by one condition
-
-```python
-users = User.search(User.username != 'unkonwn').all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-Search by combination queries
-
-```python
-# By using | and & operators
-user1 = User.search(
-    (User.username=='user1') & (User.password=='passwd1')
+# Complex query by operators & and |
+worker_jack = Worker.search(
+	((Worker.username == 'jack') & (Worker.password == 'JackSoHandsome')) | (Worker.salary=='3999.2')
 ).first()
 
-"""
-Attention:
-  - The code below is the same as the result above
-  - The difference:`first()` function selects only the first,it's faster
-  - But `all()[0]` gets all the first and then take the first one,it's slower
+# Order the rows
+the_richest_worker = Worker.search(orders=[-Worker.salary]).first()
 
-user1 = User.search(
-    (User.username=='user1') & (User.password=='passwd1')
-).all()[0]
+# Use the result
+for worker in all_workers:
+	print('username:{} password:{} salary:{}'.format(worker.username, worker.password, worker.salary))
+print('And the richest worker is {}'.format(the_richest_worker.username))
 
-In conclusion:
-  - If you only need to get the first one, use `first()`
-  - If you need to get all, use `all()`
-"""
+# Update one row
+worker_jack.salary = 3000.0
+worker_jack.update()
 
-print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
-```
-
-Sort by using the "orders" option
-
-```python
-users = User.search(
-    (User.username!='user1') | (User.password!='passwd1'),
-    orders=[-User.id] # Sort by id in reverse order
-).all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-Use the limit
-
-```python
-users = User.search(User.username!='unknown').all(limit=(0,2)) # limit only returns the first two results of the query, equivalent to "LIMIT 0, 2"
-# Equivalent to:`users = User.search(User.username!='unknown').all(limit=(2))`
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-### Update
-
----
-
-```python
-# Get one first
-user1 = User.search(
-    ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # Complex queries
-).first()
-print("id:{} username:{} password:{}".format(user1.id, user1.username, user1.password))
-
-# Edit it and update
-user1.username = 'edit'
-user1.update()
-print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
-```
-
-### Delete
-
----
-
-```python
-# Get one first
-user1 = User.search(User.username=='edit').first()
-# Delete it
-user1.delete()
+# Delete one row
+worker_jack.delete()
 ```
 
 ## Else
@@ -200,6 +103,6 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
 class ModelName(mydb.Model):
     __table__ = 'mytable'
 
-    id = PrimaryKeyField()
+    id = mydb.PrimaryKeyField()
     # Other fields...
 ```

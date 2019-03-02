@@ -17,163 +17,66 @@
 shell>pip install Pmorm
 ```
 
-## 快速开始
+## 基本使用
 
-### 首先创建数据库
-
----
+### 使用前为程序建立数据库
 
 ```
-mysql>CREATE DATABASE testdb;
+mysql>CREATE DATABASE testdb
 ```
 
-### 连接数据库,编写模型并建表
-
----
+### 快速开始
 
 ```python
-from pmorm import Mysql, PrimaryKeyField, VarcharField, DoubleField
+from pmorm import Mysql
 
-mydb = Mysql('localhost', 'root', 'your-passwd', 'testdb')
+db = Mysql('localhost', 'root', 'your-password', 'testdb1')
 
-# 定义模型User
-class User(mydb.Model):
-    # 配置表名
-    __table__ = 'user'
+class Worker(db.Model):
+    __table__ = 'worker'
 
-    # 编写模型的字段(为了正常工作,其中id字段必须定义)
-    id = PrimaryKeyField()
+    id = db.PrimaryKeyField()
+    username = db.VarcharField(max_length=32, nullable=False, unique=True, default=None)
+    password = db.VarcharField(max_length=32, nullable=False, unique=False, default=None)
+    salary = db.FloatField(nullable=False, unique=False, default=0.0)
 
-    username = VarcharField(max_length=32, nullable=False, unique=True, default=None)
-    password = VarcharField(max_length=64, nullable=False, unique=False, default=None)
-    balance = DoubleField(nullable=False, unique=True, default=0.0)
+Worker.create_table()
 
-# 如表未创建,则创建该表
-User.create_table()
-```
+# 插入数据,支持以下两种方式
+jack = Worker(username='Jack', password='JackSoHandsome', salary=3999.2)
+jack.insert()
 
-### 插入
+mary = Worker()
+mary.username = 'Mary'
+mary.password = 'MarySoBeautiful'
+mary.insert()
 
----
+# 查询数据
+all_workers = Worker.search().all()
+the_first_worker = Worker.search().first()
 
-```python
-# 简单插入
-user1 = User(username='user1', password='passwd1')
-user1.insert()
+# 支持运算符查询
+rich_workers = Worker.search(Worker.salary>=3000.0).all()
 
-# 这样也行
-user2 = User()
-user2.username = 'user2'
-user2.password = 'passwd2'
-user2.balance = 3000.0
-user2.insert()
-
-# 插入前可修改
-user3 = User(username='userx')
-user3.username = 'user3'
-user3.password = 'passwd3'
-user3.insert()
-
-# 检查对象是否被插入
-print(user1.inserted()) # True
-```
-
-### 搜索
-
----
-
-获取所有用户
-
-```python
-users = User.search().all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-根据条件筛选
-
-```python
-users = User.search(User.username != 'unkonwn').all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-组合条件筛选
-
-```python
-# 利用 | 和 & 运算符组合条件以支持更复杂的查询
-user1 = User.search(
-    (User.username=='user1') & (User.password=='passwd1')
+# 利用&和|运算符完成更复杂的查询
+worker_jack = Worker.search(
+	((Worker.username == 'jack') & (Worker.password == 'JackSoHandsome')) | (Worker.salary=='3999.2')
 ).first()
 
-"""
-注意:
-  - 下面代码与上面代码返回结果相同
-  - 不同点是:`first()`方法获取第一个元素更快,它直接查询了第一个
-  - 而`all()[0]`先查询所有再获取第一个
+# 支持查询结果排序
+the_richest_worker = Worker.search(orders=[-Worker.salary]).first()
 
-user1 = User.search(
-    (User.username=='user1') & (User.password=='passwd1')
-).all()[0]
+# 使用查询的数据
+for worker in all_workers:
+	print('username:{} password:{} salary:{}'.format(worker.username, worker.password, worker.salary))
+print('And the richest worker is {}'.format(the_richest_worker.username))
 
-结论:
-  - 如果只需要获取第一个,用`first()`
-  - 如果需要得到所有,用`all()`
-"""
+# 更新数据
+worker_jack.salary = 3000.0
+worker_jack.update()
 
-print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
-```
-
-排序查询结果
-
-```python
-users = User.search(
-    (User.username!='user1') | (User.password!='passwd1'),
-    orders=[-User.id] # 按id倒叙排列
-).all()
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-使用limit
-
-```python
-users = User.search(User.username!='unknown').all(limit=(0,2)) # 限制只返回查询结果前两个,相当于"LIMIT 0, 2"
-# 等同于:`users = User.search(User.username!='unknown').all(limit=(2))`
-
-for user in users:
-    print("id:{} username:{} password:{} balance:{}".format(user.id, user.username, user.password, user.balance))
-```
-
-### 更新
-
----
-
-```python
-# 首先获取对象
-user1 = User.search(
-    ((User.username=='user1') | (User.password=='passwd1') & (User.id==1)) # 复杂查询
-).first()
-print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
-
-# 修改并提交
-user1.username = 'edit'
-user1.update()
-print("id:{} username:{} password:{} balance:{}".format(user1.id, user1.username, user1.password, user1.balance))
-```
-
-### 删除
-
----
-
-```python
-# 首先获取对象
-user1 = User.search(User.username=='edit').first()
-# 删除
-user1.delete()
+# 移除数据
+worker_jack.delete()
 ```
 
 ## 其他
@@ -198,6 +101,6 @@ mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
 class ModelName(mydb.Model):
     __table__ = 'mytable'
 
-    id = PrimaryKeyField()
+    id = mydb.PrimaryKeyField()
     # 其他字段...
 ```

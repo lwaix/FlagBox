@@ -1,1 +1,3 @@
-from .pmorm import VERSION, Mysql, PrimaryKeyField, BooleanField, IntField, BigIntField, FloatField, DoubleField, VarcharField, TextField
+from .mysql import Mysql
+
+VERSION = '0.20'
