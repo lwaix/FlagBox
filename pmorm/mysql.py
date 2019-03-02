@@ -161,7 +161,7 @@ def get_model(conn):
 
         # 返回Result对象
         @classmethod
-        def search(cla, query=None, orders=None):
+        def select(cla, query=None, orders=None):
             cla._init()
             # cla用于封装模型,query是查询条件,orders用于排序
             return Result(cla, query, orders)

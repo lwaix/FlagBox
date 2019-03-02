@@ -54,19 +54,19 @@ mary.password = 'MarySoBeautiful'
 mary.insert()
 
 # Get all and get the first
-all_workers = Worker.search().all()
-the_first_worker = Worker.search().first()
+all_workers = Worker.select().all()
+the_first_worker = Worker.select().first()
 
 # Query by operators
-rich_workers = Worker.search(Worker.salary>=3000.0).all()
+rich_workers = Worker.select(Worker.salary>=3000.0).all()
 
 # Complex query by operators & and |
-worker_jack = Worker.search(
+worker_jack = Worker.select(
 	((Worker.username == 'jack') & (Worker.password == 'JackSoHandsome')) | (Worker.salary=='3999.2')
 ).first()
 
 # Order the rows
-the_richest_worker = Worker.search(orders=[-Worker.salary]).first()
+the_richest_worker = Worker.select(orders=[-Worker.salary]).first()
 
 # Use the result
 for worker in all_workers:

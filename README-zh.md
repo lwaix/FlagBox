@@ -52,19 +52,19 @@ mary.password = 'MarySoBeautiful'
 mary.insert()
 
 # 查询数据
-all_workers = Worker.search().all()
-the_first_worker = Worker.search().first()
+all_workers = Worker.select().all()
+the_first_worker = Worker.select().first()
 
 # 支持运算符查询
-rich_workers = Worker.search(Worker.salary>=3000.0).all()
+rich_workers = Worker.select(Worker.salary>=3000.0).all()
 
 # 利用&和|运算符完成更复杂的查询
-worker_jack = Worker.search(
+worker_jack = Worker.select(
 	((Worker.username == 'jack') & (Worker.password == 'JackSoHandsome')) | (Worker.salary=='3999.2')
 ).first()
 
 # 支持查询结果排序
-the_richest_worker = Worker.search(orders=[-Worker.salary]).first()
+the_richest_worker = Worker.select(orders=[-Worker.salary]).first()
 
 # 使用查询的数据
 for worker in all_workers:
