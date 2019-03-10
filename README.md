@@ -21,26 +21,19 @@ shell>pip install Pmorm
 
 ## Basic
 
-### Create a database first
-
-```
-mysql>CREATE DATABASE testdb;
-```
-
-### Quick start
-
 ```python
 from pmorm import Mysql
 
+# Create a connection.Automatically create database(if it is not created)
 db = Mysql('localhost', 'root', 'your-password', 'testdb1')
 
 class Worker(db.Model):
     __table__ = 'worker'
 
     id = db.PrimaryKeyField()
-    username = db.VarcharField(max_length=32, nullable=False, unique=True, default=None)
-    password = db.VarcharField(max_length=32, nullable=False, unique=False, default=None)
-    salary = db.FloatField(nullable=False, unique=False, default=0.0)
+    username = db.VarcharField(max_length=32, nullable=False, unique=True, default=None, comment="Worker's username")
+    password = db.VarcharField(max_length=32, nullable=False, unique=False, default=None, comment="Worker's password")
+    salary = db.FloatField(nullable=False, unique=False, default=0.0, comment="Worker's monthly salary")
 
 Worker.create_table()
 

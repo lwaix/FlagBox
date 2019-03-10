@@ -1,3 +1,3 @@
 from .mysql import Mysql
 
-VERSION = '0.20'
+VERSION = '0.21'

@@ -2,13 +2,20 @@ import pymysql
 
 """
 TODO:
-    - 优化代码
-    - 完善单测
+    - 单元测试
+    - BLOB字段类型
 """
 
 class Mysql:
     def __init__(self, host, user, password, database, port=3306, charset=''):
-        conn = pymysql.connect(host=host, user=user, password=password, database=database, port=port, charset=charset, autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+        conn = pymysql.connect(host=host, user=user, password=password, port=port, charset=charset, autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+
+        # 建立数据库
+        cursor = conn.cursor()
+        cursor.execute('CREATE DATABASE IF NOT EXISTS `{}`'.format(database))
+        cursor.close()
+        conn.select_db(database)
+
         self.Model = get_model(conn)
         self.PrimaryKeyField = PrimaryKeyField
         self.BooleanField = BooleanField
@@ -352,21 +359,24 @@ class UnDefaultAbleField(Field):
 
 # 对应Mysql字段VARCHAR
 class VarcharField(DefaultAbleField):
-    def __init__(self, max_length=255, nullable=True, unique=False, default=None):
+    def __init__(self, max_length=255, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.max_length = max_length
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` VARCHAR({})'.format(self.fieldname, self.max_length)
-        if self.default is not None:
-            sentence += ' DEFAULT "{}"'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT "{}"'.format(safe(self.default))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
@@ -392,10 +402,11 @@ class VarcharField(DefaultAbleField):
 
 # 对应Mysql的TEXT字段
 class TextField(UnDefaultAbleField):
-    def __init__(self, nullable=True, unique=False):
+    def __init__(self, nullable=True, unique=False, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
+        self.comment = comment
 
     # 每个字段都实现这个方法:返回这个字段的单独建表语句比如username VARCHAR(255) NOT NULL UNIQUE
     def _make_element(self):
@@ -404,6 +415,8 @@ class TextField(UnDefaultAbleField):
             sentence += ' NOT NULL'
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     # 每个字段都实现这个方法:检查值是否符合要求
@@ -434,20 +447,23 @@ class TextField(UnDefaultAbleField):
 
 # 对应Mysql的用TINYINT实现的BOOLEAN字段
 class BooleanField(DefaultAbleField):
-    def __init__(self, nullable=True, unique=False, default=None):
+    def __init__(self, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` TINYINT'.format(self.fieldname)
-        if self.default is not None:
-            sentence += ' DEFAULT {}'.format(safe(int(self.default)))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(int(self.default)))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
@@ -473,20 +489,23 @@ class BooleanField(DefaultAbleField):
 
 # 对应Mysql字段INT
 class IntField(DefaultAbleField):
-    def __init__(self, nullable=True, unique=False, default=None):
+    def __init__(self, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` INT'.format(self.fieldname)
-        if self.default is not None:
-            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
@@ -524,20 +543,23 @@ class IntField(DefaultAbleField):
 
 # 对应Mysql字段BIGINT
 class BigIntField(DefaultAbleField):
-    def __init__(self, nullable=True, unique=False, default=None):
+    def __init__(self, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` BIGINT'.format(self.fieldname)
-        if self.default is not None:
-            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
@@ -575,20 +597,23 @@ class BigIntField(DefaultAbleField):
 
 # 对应Mysql字段FLOAT
 class FloatField(DefaultAbleField):
-    def __init__(self, nullable=True, unique=False, default=None):
+    def __init__(self, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` FLOAT'.format(self.fieldname)
-        if self.default is not None:
-            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment is not None:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
@@ -627,20 +652,23 @@ class FloatField(DefaultAbleField):
 
 # 对应Mysql字段DOUBLE
 class DoubleField(DefaultAbleField):
-    def __init__(self, nullable=True, unique=False, default=None):
+    def __init__(self, nullable=True, unique=False, default=None, comment=None):
         self.fieldname = None
         self.nullable = nullable
         self.unique = unique
         self.default = default
+        self.comment = comment
 
     def _make_element(self):
         sentence = '`{}` DOUBLE'.format(self.fieldname)
-        if self.default is not None:
-            sentence += ' DEFAULT {}'.format(safe(self.default))
         if not self.nullable:
             sentence += ' NOT NULL'
+        if self.default is not None:
+            sentence += ' DEFAULT {}'.format(safe(self.default))
         if self.unique:
             sentence += ' UNIQUE'
+        if self.comment:
+            sentence += ' COMMENT "{}"'.format(safe(self.comment))
         return sentence
 
     def _check(self, value):
