@@ -3,7 +3,7 @@ import pymysql
 """
 TODO:
     - 单元测试
-    - BLOB字段类型
+    - 错误类型
 """
 
 class Mysql:
@@ -160,7 +160,17 @@ def get_model(conn):
                     raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), field.fieldname))
 
             sentence = 'INSERT INTO `{}` ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
-            cursor.execute(sentence)
+            times = 1
+            while True:
+                try:
+                    cursor.execute(sentence)
+                    break
+                except pymysql.InternalError as err:
+                    # 死锁,重试
+                    if err.args[0] == 1213:
+                        print("出现死锁,正在重试-{}".format(times))
+                        times += 1
+                        continue
             cursor.close()
 
             # 标记该对象id
@@ -195,7 +205,17 @@ def get_model(conn):
                     raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(value, fieldname))
                 set_elements.append('`{}`={}'.format(field.fieldname,field._value(value)))
             sentence = 'UPDATE `{}` SET {} WHERE `id`={}'.format(table, ','.join(set_elements), self.id)
-            cursor.execute(sentence)
+            times = 1
+            while True:
+                try:
+                    cursor.execute(sentence)
+                    break
+                except pymysql.InternalError as err:
+                    # 死锁,重试
+                    if err.args[0] == 1213:
+                        print("出现死锁,正在重试-{}".format(times))
+                        times += 1
+                        continue
             cursor.close()
 
         # 删除该对象
@@ -211,7 +231,17 @@ def get_model(conn):
             cursor = conn.cursor()
 
             sentence = 'DELETE FROM `{}` WHERE `id`={}'.format(table, self.id)
-            cursor.execute(sentence)
+            times = 1
+            while True:
+                try:
+                    cursor.execute(sentence)
+                    break
+                except pymysql.InternalError as err:
+                    # 死锁,重试
+                    if err.args[0] == 1213:
+                        print("出现死锁,正在重试-{}".format(times))
+                        times += 1
+                        continue
             cursor.close()
             self.id = None
     return MysqlModel
@@ -276,7 +306,17 @@ class Result:
             sentence = '{} LIMIT {},{}'.format(self.sentence, limit[0], limit[1])
 
         cursor = conn.cursor()
-        cursor.execute(sentence)
+        times = 1
+        while True:
+            try:
+                cursor.execute(sentence)
+                break
+            except pymysql.InternalError as err:
+                # 死锁,重试
+                if err.args[0] == 1213:
+                    print("出现死锁,正在重试-{}".format(times))
+                    times += 1
+                    continue
         rows = cursor.fetchall()
         cursor.close()
 
@@ -298,7 +338,17 @@ class Result:
         fields_dict = self.fields_dict
 
         cursor = conn.cursor()
-        cursor.execute(sentence)
+        times = 1
+        while True:
+            try:
+                cursor.execute(sentence)
+                break
+            except pymysql.InternalError as err:
+                # 死锁,重试
+                if err.args[0] == 1213:
+                    print("出现死锁,正在重试-{}".format(times))
+                    times += 1
+                    continue
         row = cursor.fetchone()
         cursor.close()
 

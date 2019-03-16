@@ -12,6 +12,7 @@ Functional overview
 - Basic CRUD
 - Operator query
 - Automatic safety escape
+- Deadlock retry
 
 ## Installing
 
