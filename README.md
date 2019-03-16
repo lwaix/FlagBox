@@ -2,9 +2,13 @@
 
 # pmorm.py - a simple mysql orm for python3
 
-<img src="https://img.shields.io/badge/python-3.5-red.svg" href="https://github.com/lwaix/Pmorm"></img>
+<a href="https://github.com/lwaix/Pmorm">
+  <img src="https://img.shields.io/badge/python-3.5-red.svg" alt="PYTHON>=3.5">
+</a>
 
-<img src="https://img.shields.io/badge/license-MIT-green.svg" href="https://github.com/lwaix/Pmorm/blob/master/LICENSE"></img>
+<a href="https://github.com/lwaix/Pmorm/blob/master/LICENSE">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="LICENSE-MIT">
+</a>
 
 Functional overview
 
