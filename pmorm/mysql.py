@@ -54,7 +54,7 @@ def get_model(conn):
                         value.fieldname = key
                         fields_dict[key] = value
                 if not id_sign:
-                    raise AttributeError('未定义的字段:id')
+                    raise FieldError('Undefined field:id')
                 cla._fields_dict = fields_dict
                 # 标记已经初始化
                 cla._init_sign = True
@@ -86,12 +86,11 @@ def get_model(conn):
             fields_dict = self.__class__._get_fields_dict()
             fieldnames = fields_dict.keys()
             fields = fields_dict.values()
-            keys = kwargs.keys()
 
             # 检查未知的参数
-            for key in keys:
+            for key in kwargs.keys():
                 if key not in fieldnames:
-                    raise ValueError('未知的参数:{}'.format(key))
+                    raise FieldError('Undefined field:{}'.format(key))
 
             # 设置对象的值
             for fieldname in fieldnames:
@@ -137,7 +136,7 @@ def get_model(conn):
 
             # 被插入过的对象无法被重复插入
             if self.inserted():
-                raise RuntimeError('该对象已被插入,不可重复插入')
+                raise InsertError("Can't insert objects inserted")
 
             conn = self.__class__.__conn__
             table = self.__class__.__table__
@@ -157,7 +156,7 @@ def get_model(conn):
                     fieldnames.append('`{}`'.format(fieldname))
                     values.append(field._value(((current_data.get(fieldname)))))
                 else:
-                    raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(current_data.get(fieldname), field.fieldname))
+                    raise ValueError('{} does not match field {}'.format(current_data.get(fieldname), field.fieldname))
 
             sentence = 'INSERT INTO `{}` ({}) VALUES({})'.format(table, ','.join(fieldnames), ','.join(values))
             times = 1
@@ -168,7 +167,7 @@ def get_model(conn):
                 except pymysql.InternalError as err:
                     # 死锁,重试
                     if err.args[0] == 1213:
-                        print("出现死锁,正在重试-{}".format(times))
+                        print("Deadlock occurs,Retry-{}".format(times))
                         times += 1
                         continue
             cursor.close()
@@ -188,7 +187,7 @@ def get_model(conn):
             self.__class__._init()
             # 没有被插入的对象无法更新
             if not self.inserted():
-                raise RuntimeError('该对象不可更新')
+                raise UpdateError('Cannot update objects not inserted')
             conn = self.__class__.__conn__
             table = self.__class__.__table__
             cursor = conn.cursor()
@@ -202,7 +201,7 @@ def get_model(conn):
                     continue
                 value = current_data.get(fieldname)
                 if not field._check(value):
-                    raise ValueError('值{}与字段{}不匹配,可能原因:\n1.类型不匹配\n2.该值不能为None'.format(value, fieldname))
+                    raise ValueError('{} does not match field {}'.format(value, fieldname))
                 set_elements.append('`{}`={}'.format(field.fieldname,field._value(value)))
             sentence = 'UPDATE `{}` SET {} WHERE `id`={}'.format(table, ','.join(set_elements), self.id)
             times = 1
@@ -213,7 +212,7 @@ def get_model(conn):
                 except pymysql.InternalError as err:
                     # 死锁,重试
                     if err.args[0] == 1213:
-                        print("出现死锁,正在重试-{}".format(times))
+                        print('Deadlock occurs,Retry-{}'.format(times))
                         times += 1
                         continue
             cursor.close()
@@ -224,7 +223,7 @@ def get_model(conn):
 
             # 没被插入的无法被删除
             if not self.inserted():
-                raise RuntimeError('该对象不可删除')
+                raise DeleteError('Cannot delete objects not inserted')
 
             conn = self.__class__.__conn__
             table = self.__class__.__table__
@@ -239,7 +238,7 @@ def get_model(conn):
                 except pymysql.InternalError as err:
                     # 死锁,重试
                     if err.args[0] == 1213:
-                        print("出现死锁,正在重试-{}".format(times))
+                        print('Deadlock occurs,Retry-{}'.format(times))
                         times += 1
                         continue
             cursor.close()
@@ -314,7 +313,7 @@ class Result:
             except pymysql.InternalError as err:
                 # 死锁,重试
                 if err.args[0] == 1213:
-                    print("出现死锁,正在重试-{}".format(times))
+                    print('Deadlock occurs,Retry-{}'.format(times))
                     times += 1
                     continue
         rows = cursor.fetchall()
@@ -346,7 +345,7 @@ class Result:
             except pymysql.InternalError as err:
                 # 死锁,重试
                 if err.args[0] == 1213:
-                    print("出现死锁,正在重试-{}".format(times))
+                    print('Deadlock occurs,Retry-{}'.format(times))
                     times += 1
                     continue
         row = cursor.fetchone()
@@ -795,3 +794,20 @@ class PrimaryKeyField(UnDefaultAbleField):
 
     def __le__(self, value):
         return Query('`{}`<={}'.format(self.fieldname, self._value(value)))
+
+# Errors
+class PmormError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+class FieldError(PmormError):
+    pass
+
+class InsertError(PmormError):
+    pass
+
+class UpdateError(PmormError):
+    pass
+
+class DeleteError(PmormError):
+    pass
