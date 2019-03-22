@@ -796,18 +796,18 @@ class PrimaryKeyField(UnDefaultAbleField):
         return Query('`{}`<={}'.format(self.fieldname, self._value(value)))
 
 # Errors
-class PmormError(Exception):
+class Error(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
-class FieldError(PmormError):
+class FieldError(Error):
     pass
 
-class InsertError(PmormError):
+class InsertError(Error):
     pass
 
-class UpdateError(PmormError):
+class UpdateError(Error):
     pass
 
-class DeleteError(PmormError):
+class DeleteError(Error):
     pass

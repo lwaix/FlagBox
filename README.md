@@ -1,12 +1,12 @@
-##### [中文-Chinese](https://github.com/lwaix/Pmorm/blob/master/README-zh.md "中文-Chinese")
+##### [中文-Chinese](https://github.com/lwaix/flagbox/blob/master/README-zh.md "中文-Chinese")
 
-# pmorm.py - a simple mysql orm for python3
+# FlagBox - a simple mysql orm for python3
 
-<a href="https://github.com/lwaix/Pmorm">
+<a href="https://github.com/lwaix/flagbox">
   <img src="https://img.shields.io/badge/python-3.5-red.svg">
 </a>
 
-<a href="https://github.com/lwaix/Pmorm/blob/master/LICENSE">
+<a href="https://github.com/lwaix/flagbox/blob/master/LICENSE">
   <img src="https://img.shields.io/badge/license-MIT-green.svg">
 </a>
 
@@ -21,13 +21,13 @@ Functional overview
 ## Installing
 
 ```
-shell>pip install Pmorm
+shell>pip install flagbox
 ```
 
 ## Basic
 
 ```python
-from pmorm import Mysql
+from flagbox import Mysql
 
 # Create a connection.Automatically create database(if it is not created)
 db = Mysql('localhost', 'root', 'your-password', 'testdb1')
@@ -83,7 +83,7 @@ worker_jack.delete()
 
 ### Currently supported MySQL fields
 
-Pmorm|Mysql
+FlagBox|Mysql
 --|:--:
 PrimaryKeyField|NO
 BooleanField|BOOLEAN
@@ -94,7 +94,8 @@ DoubleField|DOUBLE
 VarcharField|VARCHAR
 TextField|TEXT
 
-PrimaryKeyField must be defined in each model, so a basic model looks like...
+PrimaryKeyField must be defined as the primary key
+A basic definition below
 
 ```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')

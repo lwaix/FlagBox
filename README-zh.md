@@ -1,10 +1,10 @@
-# pmorm.py - 简约的Python3 Mysql ORM
+# FlagBox - 简约的Python3 Mysql ORM
 
-<a href="https://github.com/lwaix/Pmorm">
+<a href="https://github.com/lwaix/flagbox">
   <img src="https://img.shields.io/badge/python-3.5-red.svg">
 </a>
 
-<a href="https://github.com/lwaix/Pmorm/blob/master/LICENSE">
+<a href="https://github.com/lwaix/flagbox/blob/master/LICENSE">
   <img src="https://img.shields.io/badge/license-MIT-green.svg">
 </a>
 
@@ -19,13 +19,13 @@
 ## 安装
 
 ```
-shell>pip install Pmorm
+shell>pip install flagbox
 ```
 
 ## 基本使用
 
 ```python
-from pmorm import Mysql
+from flagbox import Mysql
 
 # 建立连接,如数据库未创建则自动创建
 db = Mysql('localhost', 'root', 'your-password', 'testdb1')
@@ -81,7 +81,7 @@ worker_jack.delete()
 
 ### 目前支持的字段类型
 
-Pmorm|Mysql
+FlagBox|Mysql
 --|:--:
 PrimaryKeyField|无
 BooleanField|BOOLEAN
@@ -92,7 +92,8 @@ DoubleField|DOUBLE
 VarcharField|VARCHAR
 TextField|TEXT
 
-其中 PrimaryKeyField 是每个模型必须定义的,也是Pmorm工作的前提,所以一个基本的模型定义看起来像这样
+其中 PrimaryKeyField 每个模型必须定义作为主键(该模块工作前提)
+下面是一个基本的模型定义
 
 ```python
 mydb = Mysql('localhost', 'root', 'your-passwd', 'your-database')
